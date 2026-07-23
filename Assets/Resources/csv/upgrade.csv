@@ -1,0 +1,9 @@
+﻿identifier,desc,effect,prev,cost,maxLevel,unlocked,value,comment
+holdItemCount,hold item count +{0},holdItemCount,,5,3,1,1,
+time,total game time increase {0},time,holdItemCount,5,3,1,3,
+hitDamage,hit damage +{0},hitDamage,holdItemCount,5,2,1,1,
+jumpDistance,jump distance +{0},jumpDistance,holdItemCount,5,2,1,1,
+passBorder,can move through the border,passBorder,jumpDistance,5,1,,1,
+enemyFood,killed enemy drop food,enemyFood,hitDamage,5,1,,1,
+foodCollectAmount,each collected food count +{0},foodCollectAmount,holdItemCount,5,1,,1,
+machineCollect,randomly place a machine in the map which will collect adjacent tiles food. ,machineCollect,foodCollectAmount,5,1,,1,
