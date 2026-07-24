@@ -34,6 +34,7 @@ public class UpgradePanelView : MonoBehaviour
     bool built;
     System.Action onMetaGoldChanged;
     System.Action onStartNextRun;
+    System.Action<string> onSceneSelected;
     float buttonSize = DefaultButtonSize;
 
     readonly Dictionary<string, UpgradeNodeView> nodeViews = new Dictionary<string, UpgradeNodeView>();
@@ -52,11 +53,13 @@ public class UpgradePanelView : MonoBehaviour
     public void Setup(
         MetaSaveData save,
         System.Action startNextRun,
-        System.Action metaGoldChanged = null)
+        System.Action metaGoldChanged = null,
+        System.Action<string> sceneSelected = null)
     {
         metaSave = save;
         onStartNextRun = startNextRun;
         onMetaGoldChanged = metaGoldChanged;
+        onSceneSelected = sceneSelected;
 
         if (startNextRunButton != null)
         {
@@ -105,6 +108,12 @@ public class UpgradePanelView : MonoBehaviour
         EnsureBuilt();
         panZoom?.ResetView();
         ReloadSave();
+
+        // Default to the newest unlocked planet; player can still switch afterward.
+        if (MetaSaveService.SelectLatestUnlockedScene(metaSave))
+            NotifySceneSelected(MetaSaveService.GetSelectedSceneId(metaSave));
+
+        RefreshSceneButtons();
     }
 
     void BuildTreeNodes()
@@ -376,7 +385,16 @@ public class UpgradePanelView : MonoBehaviour
         if (!MetaSaveService.TrySelectScene(metaSave, identifier))
             return;
 
+        NotifySceneSelected(identifier);
         RefreshSceneButtons();
+    }
+
+    void NotifySceneSelected(string identifier)
+    {
+        if (string.IsNullOrEmpty(identifier))
+            return;
+
+        onSceneSelected?.Invoke(identifier);
     }
 
     void CreateConnectionLine(Vector2 from, Vector2 to)

@@ -14,14 +14,14 @@ public class GridBoard : MonoBehaviour
     readonly Dictionary<Vector2Int, Color> _tileBaseColors = new Dictionary<Vector2Int, Color>();
     readonly Dictionary<Vector2Int, int> _hazardTintRefs = new Dictionary<Vector2Int, int>();
     readonly HashSet<Vector2Int> _hazardOccupied = new HashSet<Vector2Int>();
-    CollectRobot _robot;
+    readonly List<CollectRobot> _robots = new List<CollectRobot>();
     BossCollectFly _boss;
 
     Transform _tileRoot;
     Transform _entityRoot;
 
     public Transform EntityRoot => _entityRoot;
-    public CollectRobot Robot => _robot;
+    public IReadOnlyList<CollectRobot> Robots => _robots;
     public BossCollectFly Boss => _boss;
 
     public void Init(MapData map, GameData data)
@@ -197,20 +197,61 @@ public class GridBoard : MonoBehaviour
     public void RegisterEnemy(Vector2Int cell, EnemyItem enemy) => _enemies[cell] = enemy;
     public void UnregisterEnemy(Vector2Int cell) => _enemies.Remove(cell);
 
-    public void RegisterRobot(CollectRobot robot) => _robot = robot;
+    public void RegisterRobot(CollectRobot robot)
+    {
+        if (robot == null || _robots.Contains(robot))
+            return;
+        _robots.Add(robot);
+    }
+
     public void UnregisterRobot(CollectRobot robot)
     {
-        if (_robot == robot)
-            _robot = null;
+        if (robot == null)
+            return;
+        _robots.Remove(robot);
     }
 
     public bool TryGetRobot(Vector2Int cell, out CollectRobot robot)
     {
-        robot = _robot;
-        return _robot != null && _robot.GridPos == cell;
+        for (int i = 0; i < _robots.Count; i++)
+        {
+            var r = _robots[i];
+            if (r != null && r.GridPos == cell)
+            {
+                robot = r;
+                return true;
+            }
+        }
+
+        robot = null;
+        return false;
     }
 
-    public bool HasRobot(Vector2Int cell) => _robot != null && _robot.GridPos == cell;
+    public bool HasRobot(Vector2Int cell) => TryGetRobot(cell, out _);
+
+    /// <summary>True if any robot occupies the 3x3 neighborhood centered on <paramref name="cell"/>.</summary>
+    public bool HasRobotInNeighborhood(Vector2Int cell)
+    {
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            for (int dx = -1; dx <= 1; dx++)
+            {
+                if (HasRobot(cell + new Vector2Int(dx, dy)))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void StartAllRobotsWorking()
+    {
+        for (int i = 0; i < _robots.Count; i++)
+        {
+            if (_robots[i] != null)
+                _robots[i].StartWorking();
+        }
+    }
 
     public void RegisterBoss(BossCollectFly boss) => _boss = boss;
 

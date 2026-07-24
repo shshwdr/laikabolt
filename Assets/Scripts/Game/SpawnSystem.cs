@@ -50,7 +50,8 @@ public class SpawnSystem : MonoBehaviour
 
     public void SpawnInitial()
     {
-        if (_data.machineCollect)
+        int robotCount = Mathf.Max(0, _data.machineCollectCount);
+        for (int i = 0; i < robotCount; i++)
             TrySpawnRobot();
 
         for (int i = 0; i < _data.initialCollectables; i++)
@@ -65,8 +66,8 @@ public class SpawnSystem : MonoBehaviour
         _foodTimer = 0f;
         _enemyTimer = 0f;
 
-        if (_board != null && _board.Robot != null)
-            _board.Robot.StartWorking();
+        if (_board != null)
+            _board.StartAllRobotsWorking();
     }
 
     public void Stop()
@@ -153,6 +154,16 @@ public class SpawnSystem : MonoBehaviour
         food.Setup(_board, cell, _foodSprite, _data.cellSize);
     }
 
+    /// <summary>Creates a food that goes straight into the player's hand (no board cell).</summary>
+    public FoodItem CreateCarryOnlyFood()
+    {
+        var go = new GameObject("Food");
+        go.transform.SetParent(_board.EntityRoot, false);
+        var food = go.AddComponent<FoodItem>();
+        food.SetupUnregistered(_foodSprite, _data.cellSize);
+        return food;
+    }
+
     void TrySpawnRobot()
     {
         CollectRobotCandidates(_candidates);
@@ -184,7 +195,10 @@ public class SpawnSystem : MonoBehaviour
                     continue;
                 if (playerCell.HasValue && playerCell.Value == cell)
                     continue;
-                if (_board.HasFood(cell) || _board.HasEnemy(cell) || _board.HasRobot(cell) || _board.HasBoss(cell) || _board.HasHazard(cell))
+                if (_board.HasFood(cell) || _board.HasEnemy(cell) || _board.HasBoss(cell) || _board.HasHazard(cell))
+                    continue;
+                // 3x3 around this cell must not already contain another robot.
+                if (_board.HasRobotInNeighborhood(cell))
                     continue;
                 if (!TouchesWall(cell))
                     continue;

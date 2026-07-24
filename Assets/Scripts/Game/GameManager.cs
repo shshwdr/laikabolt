@@ -264,7 +264,19 @@ public class GameManager : MonoBehaviour
 
 
 
-        _upgradePanel.Setup(_metaSave, StartNextRun);
+        _upgradePanel.Setup(_metaSave, StartNextRun, sceneSelected: OnUpgradeSceneSelected);
+
+    }
+
+
+
+    void OnUpgradeSceneSelected(string sceneId)
+
+    {
+
+        if (exploreView != null)
+
+            exploreView.ApplySceneBackground(sceneId);
 
     }
 
@@ -588,7 +600,7 @@ public class GameManager : MonoBehaviour
 
         if (_timeLeft <= 0f)
 
-            EndGame();
+            EndGameByTimeout();
 
     }
 
@@ -614,7 +626,77 @@ public class GameManager : MonoBehaviour
 
         if (_timeLeft <= 0f)
 
-            EndGame();
+            EndGameByTimeout();
+
+    }
+
+
+
+    public bool IsLastMinuteActive =>
+
+        IsPlaying
+
+        && _timerStarted
+
+        && _runtimeData != null
+
+        && _runtimeData.lastMinute
+
+        && _timeLeft > 0f
+
+        && _timeLeft < 5f;
+
+
+
+    public FoodItem CreateLastMinuteFood()
+
+    {
+
+        if (_spawn == null)
+
+            return null;
+
+        return _spawn.CreateCarryOnlyFood();
+
+    }
+
+
+
+    void EndGameByTimeout()
+
+    {
+
+        TryApplyFinalSafeBonus();
+
+        EndGame();
+
+    }
+
+
+
+    void TryApplyFinalSafeBonus()
+
+    {
+
+        if (_runtimeData == null || _runtimeData.finalSafePercent <= 0)
+
+            return;
+
+        if (_player == null || _board == null)
+
+            return;
+
+        if (!_board.Map.IsStart(_player.GridPos.x, _player.GridPos.y))
+
+            return;
+
+
+
+        int bonus = Mathf.RoundToInt(Score * (_runtimeData.finalSafePercent / 100f));
+
+        if (bonus > 0)
+
+            AddScore(bonus);
 
     }
 

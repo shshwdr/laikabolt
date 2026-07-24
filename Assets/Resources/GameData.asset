@@ -17,7 +17,7 @@ MonoBehaviour:
   enemySpawnInterval: 5
   initialCollectables: 3
   initialEnemies: 1
-  holdItemCount: 3
+  holdItemCount: 1
   playerHitDamage: 1
   jumpDistance: 0
   passBorder: 0
@@ -26,10 +26,13 @@ MonoBehaviour:
   machineCollect: 0
   machineCollectInterval: 1
   bonusGenerateChance: 0
+  finalSafePercent: 0
+  fullRewardBonus: 0
+  lastMinute: 0
   enemyHitsToKill: 5
   cellSize: 1
-  moveDuration: 0.1
-  jumpDuration: 0.28
+  moveDuration: 0.4
+  jumpDuration: 0.5
   jumpPower: 0.85
   carryScale: 0.8
   carryBaseY: 0.35

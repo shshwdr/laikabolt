@@ -40,9 +40,11 @@ public class EnemyItem : MonoBehaviour
     {
         if (!IsAlive) return true;
 
-        HitsLeft -= Mathf.Max(1, damage);
+        int applied = Mathf.Max(1, damage);
+        HitsLeft -= applied;
         transform.DOKill(false);
         transform.DOPunchScale(Vector3.one * 0.15f, 0.12f, 4, 0.5f);
+        DamageNumber.Spawn(transform.position, applied);
 
         if (HitsLeft > 0)
             return false;

@@ -71,13 +71,6 @@ public class BossCollectFly : MonoBehaviour
         _hits++;
         if (_hits >= _hitsNeeded)
         {
-            if (!player.CanCarryMore)
-            {
-                player.NotifyCarryFull();
-                Flee();
-                return false;
-            }
-
             Catch(player);
             return true;
         }

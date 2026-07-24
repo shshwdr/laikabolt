@@ -6,7 +6,7 @@ public class PlayerController : MonoBehaviour
 {
     public Vector2Int GridPos { get; private set; }
     public bool IsBusy { get; private set; }
-    public int CarryCount => _carried.Count + (_carriedBoss != null ? 1 : 0);
+    public int CarryCount => _carried.Count;
     public bool CanCarryMore => CarryCount < _data.holdItemCount;
     public bool HasBoss => _carriedBoss != null;
 
@@ -118,6 +118,9 @@ public class PlayerController : MonoBehaviour
             JumpTo(jumpLanding);
     }
 
+    /// <summary>Ice auto-slide uses half duration (faster) vs player input moves.</summary>
+    const float IceSlideDurationScale = 0.5f;
+
     /// <summary>Ice skate auto-slide in the arrival direction.</summary>
     void TryIceSlide(Vector2Int dir)
     {
@@ -157,9 +160,9 @@ public class PlayerController : MonoBehaviour
             _iceChainDepth++;
             _lastMoveDir = dir;
             if (jump)
-                JumpToWrapped(landing, dir);
+                JumpToWrapped(landing, dir, IceSlideDurationScale);
             else
-                MoveToWrapped(landing, dir);
+                MoveToWrapped(landing, dir, IceSlideDurationScale);
             return;
         }
 
@@ -175,7 +178,7 @@ public class PlayerController : MonoBehaviour
 
             _iceChainDepth++;
             _lastMoveDir = dir;
-            MoveTo(target);
+            MoveTo(target, IceSlideDurationScale);
             return;
         }
 
@@ -188,9 +191,9 @@ public class PlayerController : MonoBehaviour
         _iceChainDepth++;
         _lastMoveDir = dir;
         if (jumpWrapped)
-            JumpToWrapped(jumpLanding, dir);
+            JumpToWrapped(jumpLanding, dir, IceSlideDurationScale);
         else
-            JumpTo(jumpLanding);
+            JumpTo(jumpLanding, IceSlideDurationScale);
     }
 
     bool TryResolveWrappedMove(Vector2Int dir, out Vector2Int landing, out bool jump)
@@ -335,12 +338,13 @@ public class PlayerController : MonoBehaviour
         return true;
     }
 
-    void MoveTo(Vector2Int target)
+    void MoveTo(Vector2Int target, float durationScale = 1f)
     {
         IsBusy = true;
         Vector3 world = _board.CellToWorld(target);
+        float duration = Mathf.Max(0.01f, _data.moveDuration * durationScale);
         transform.DOKill();
-        transform.DOMove(world, _data.moveDuration)
+        transform.DOMove(world, duration)
             .SetEase(Ease.OutQuad)
             .OnComplete(() =>
             {
@@ -350,12 +354,13 @@ public class PlayerController : MonoBehaviour
             });
     }
 
-    void JumpTo(Vector2Int target)
+    void JumpTo(Vector2Int target, float durationScale = 1f)
     {
         IsBusy = true;
         Vector3 world = _board.CellToWorld(target);
+        float duration = Mathf.Max(0.01f, _data.jumpDuration * durationScale);
         transform.DOKill();
-        transform.DOJump(world, _data.jumpPower, 1, _data.jumpDuration)
+        transform.DOJump(world, _data.jumpPower, 1, duration)
             .SetEase(Ease.OutQuad)
             .OnComplete(() =>
             {
@@ -365,14 +370,14 @@ public class PlayerController : MonoBehaviour
             });
     }
 
-    void MoveToWrapped(Vector2Int target, Vector2Int dir)
+    void MoveToWrapped(Vector2Int target, Vector2Int dir, float durationScale = 1f)
     {
         IsBusy = true;
         Vector3 worldDir = DirToWorld(dir);
         Vector3 exit = transform.position + worldDir * (_data.cellSize * 0.55f);
         Vector3 end = _board.CellToWorld(target);
         Vector3 enter = end - worldDir * (_data.cellSize * 0.55f);
-        float half = Mathf.Max(0.01f, _data.moveDuration * 0.5f);
+        float half = Mathf.Max(0.01f, _data.moveDuration * 0.5f * durationScale);
 
         transform.DOKill();
         var seq = DOTween.Sequence();
@@ -387,14 +392,14 @@ public class PlayerController : MonoBehaviour
         });
     }
 
-    void JumpToWrapped(Vector2Int target, Vector2Int dir)
+    void JumpToWrapped(Vector2Int target, Vector2Int dir, float durationScale = 1f)
     {
         IsBusy = true;
         Vector3 worldDir = DirToWorld(dir);
         Vector3 exit = transform.position + worldDir * (_data.cellSize * 0.55f);
         Vector3 end = _board.CellToWorld(target);
         Vector3 enter = end - worldDir * (_data.cellSize * 0.55f);
-        float half = Mathf.Max(0.01f, _data.jumpDuration * 0.5f);
+        float half = Mathf.Max(0.01f, _data.jumpDuration * 0.5f * durationScale);
 
         transform.DOKill();
         var seq = DOTween.Sequence();
@@ -459,6 +464,14 @@ public class PlayerController : MonoBehaviour
         }
 
         ReceiveFood(food);
+
+        // lastMinute: picking one food from the ground puts two in hand.
+        if (_game != null && _game.IsLastMinuteActive && CanCarryMore)
+        {
+            var bonus = _game.CreateLastMinuteFood();
+            if (bonus != null)
+                ReceiveFood(bonus);
+        }
     }
 
     public void ReceiveFood(FoodItem food)
@@ -546,14 +559,22 @@ public class PlayerController : MonoBehaviour
         int n = _carried.Count;
         if (n > 0)
         {
+            bool fullCarriage = n >= _data.holdItemCount;
             Vector3 startWorld = _board.CellToWorld(GridPos);
             for (int i = 0; i < _carried.Count; i++)
                 _carried[i].DepositAndDestroy(startWorld + Vector3.down * 0.1f, 0.2f);
 
             _carried.Clear();
             int score = n * (1 + Mathf.Max(0, _data.foodCollectAmount));
+            int progress = n;
+            if (fullCarriage && _data.fullRewardBonus > 0)
+            {
+                score += _data.fullRewardBonus;
+                progress += _data.fullRewardBonus;
+            }
+
             _game.AddScore(score);
-            _game.AddFoodProgress(n);
+            _game.AddFoodProgress(progress);
             _game.NotifyCarryChanged();
         }
 

@@ -48,6 +48,7 @@ public static class MetaSaveService
         EnsureCsvLoaded();
         var config = Object.Instantiate(baseData);
         float foodGenerateBonusPercent = 0f;
+        float moveSpeedBonusPercent = 0f;
 
         foreach (var info in CSVLoader.GetAll())
         {
@@ -79,7 +80,8 @@ public static class MetaSaveService
                     config.foodCollectAmount += info.value * level;
                     break;
                 case "machineCollect":
-                    config.machineCollect = true;
+                    config.machineCollectCount += level;
+                    config.machineCollect = config.machineCollectCount > 0;
                     config.machineCollectInterval = info.value * level;
                     break;
                 case "bonusGenerate":
@@ -88,11 +90,33 @@ public static class MetaSaveService
                 case "foodGenerate":
                     foodGenerateBonusPercent += info.value * level;
                     break;
+                case "startFood":
+                    config.initialCollectables += info.value * level;
+                    break;
+                case "finalSafe":
+                    config.finalSafePercent += info.value * level;
+                    break;
+                case "fullReward":
+                    config.fullRewardBonus += info.value * level;
+                    break;
+                case "lastMinute":
+                    config.lastMinute = true;
+                    break;
+                case "moveSpeed":
+                    moveSpeedBonusPercent += info.value * level;
+                    break;
             }
         }
 
         if (foodGenerateBonusPercent > 0f)
             config.collectableSpawnInterval /= 1f + foodGenerateBonusPercent / 100f;
+
+        if (moveSpeedBonusPercent > 0f)
+        {
+            float speedFactor = 1f + moveSpeedBonusPercent / 100f;
+            config.moveDuration /= speedFactor;
+            config.jumpDuration /= speedFactor;
+        }
 
         return config;
     }
@@ -148,6 +172,17 @@ public static class MetaSaveService
         return "0";
     }
 
+    /// <summary>Highest unlocked scene id (Maps / Resources/scene key).</summary>
+    public static string GetLatestUnlockedSceneId(MetaSaveData meta)
+    {
+        EnsureCsvLoaded();
+        if (meta == null)
+            return "0";
+
+        var info = CSVLoader.GetScene(meta.MaxUnlockedSceneId);
+        return info != null ? info.ResolvedIdentifier : meta.MaxUnlockedSceneId.ToString();
+    }
+
     public static bool TrySelectScene(MetaSaveData meta, string identifier)
     {
         EnsureCsvLoaded();
@@ -161,6 +196,12 @@ public static class MetaSaveService
         meta.SelectedSceneId = identifier;
         Save(meta);
         return true;
+    }
+
+    /// <summary>Selects the newest unlocked scene for the next run.</summary>
+    public static bool SelectLatestUnlockedScene(MetaSaveData meta)
+    {
+        return TrySelectScene(meta, GetLatestUnlockedSceneId(meta));
     }
 
     /// <summary>Marks a scene cleared and unlocks the next one if any.</summary>

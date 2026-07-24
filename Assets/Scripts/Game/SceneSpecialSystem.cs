@@ -315,25 +315,41 @@ public class SceneSpecialSystem : MonoBehaviour
     bool TryPickLine(out bool isRow, out int index)
     {
         isRow = Random.value < 0.5f;
+        if (!TryFillValidLines(isRow, out var valid))
+        {
+            // Prefer the other axis if the first choice has no safe lines.
+            isRow = !isRow;
+            if (!TryFillValidLines(isRow, out valid))
+            {
+                index = 0;
+                return false;
+            }
+        }
+
+        index = valid[Random.Range(0, valid.Count)];
+        return true;
+    }
+
+    bool TryFillValidLines(bool isRow, out List<int> valid)
+    {
         int max = isRow ? _board.Map.Height : _board.Map.Width;
-        var valid = new List<int>(max);
+        valid = new List<int>(max);
+
+        int banned = -1;
+        if (_board.Map.TryGetStart(out var start))
+            banned = isRow ? start.y : start.x;
 
         for (int i = 0; i < max; i++)
         {
+            if (i == banned)
+                continue;
             if (LineContainsBoss(isRow, i))
                 continue;
             if (LineHasWalkable(isRow, i))
                 valid.Add(i);
         }
 
-        if (valid.Count == 0)
-        {
-            index = 0;
-            return false;
-        }
-
-        index = valid[Random.Range(0, valid.Count)];
-        return true;
+        return valid.Count > 0;
     }
 
     bool LineContainsBoss(bool isRow, int index)

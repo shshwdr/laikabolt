@@ -25,12 +25,22 @@ public class GameData : ScriptableObject
     public int enemyFoodDrop;
     [Tooltip("Bonus per deposited food: score = count * (1 + foodCollectAmount).")]
     public int foodCollectAmount;
-    [Tooltip("Spawn a collecting robot at run start.")]
+    [Tooltip("Spawn collecting robot(s) at run start.")]
     public bool machineCollect;
+    [Tooltip("How many collect robots to spawn (sum of machineCollect upgrade levels).")]
+    public int machineCollectCount;
     [Tooltip("Seconds between each food grab by the collect robot.")]
     public float machineCollectInterval = 1f;
     [Tooltip("Percent chance to spawn one extra stacked food when generating food.")]
     public int bonusGenerateChance;
+
+    [Header("Upgrade Effects")]
+    [Tooltip("When time expires on Start/spaceship, Score += Score * percent / 100.")]
+    public int finalSafePercent;
+    [Tooltip("When depositing with a full carriage, flat bonus score (value x level from upgrade).")]
+    public int fullRewardBonus;
+    [Tooltip("When remaining time is below 5s, each ground pickup adds a second food to hand.")]
+    public bool lastMinute;
 
     [Header("Combat")]
     public int enemyHitsToKill = 3;
