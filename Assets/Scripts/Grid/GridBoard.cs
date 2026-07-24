@@ -197,6 +197,17 @@ public class GridBoard : MonoBehaviour
     public void RegisterEnemy(Vector2Int cell, EnemyItem enemy) => _enemies[cell] = enemy;
     public void UnregisterEnemy(Vector2Int cell) => _enemies.Remove(cell);
 
+    /// <summary>Snapshot of currently registered enemies (safe to mutate board during iteration).</summary>
+    public void GetEnemies(List<EnemyItem> buffer)
+    {
+        buffer.Clear();
+        foreach (var pair in _enemies)
+        {
+            if (pair.Value != null)
+                buffer.Add(pair.Value);
+        }
+    }
+
     public void RegisterRobot(CollectRobot robot)
     {
         if (robot == null || _robots.Contains(robot))

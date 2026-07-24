@@ -24,16 +24,24 @@ MonoBehaviour:
   enemyFoodDrop: 0
   foodCollectAmount: 0
   machineCollect: 0
+  machineCollectCount: 0
   machineCollectInterval: 1
   bonusGenerateChance: 0
   finalSafePercent: 0
   fullRewardBonus: 0
   lastMinute: 0
+  dash: 0
+  jumpAttack: 0
+  dashAttack: 0
+  homeAttack: 0
+  attackAttract: 0
   enemyHitsToKill: 5
   cellSize: 1
   moveDuration: 0.4
   jumpDuration: 0.5
   jumpPower: 0.85
+  dashHoldSeconds: 0.3
+  dashDuration: 0.06
   carryScale: 0.8
   carryBaseY: 0.35
   carryStackHeightStep: 0.7

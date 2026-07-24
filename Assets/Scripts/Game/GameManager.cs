@@ -607,27 +607,19 @@ public class GameManager : MonoBehaviour
 
 
     public void ApplyTimeDamage(float seconds)
-
     {
-
         if (!IsPlaying || seconds <= 0f)
-
             return;
 
-
-
         _timeLeft -= seconds;
-
         if (exploreView != null)
-
             exploreView.SetTimer(_timeLeft);
 
-
+        if (_player != null)
+            DamageNumber.Spawn(_player.transform.position, Mathf.Max(1, Mathf.RoundToInt(seconds)));
 
         if (_timeLeft <= 0f)
-
             EndGameByTimeout();
-
     }
 
 

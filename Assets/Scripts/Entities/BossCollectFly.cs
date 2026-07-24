@@ -60,12 +60,12 @@ public class BossCollectFly : MonoBehaviour
             .OnComplete(() => { _flying = false; });
     }
 
-    /// <summary>Player stepped on this cell. Returns true if caught this touch.</summary>
-    public bool TryTouch(PlayerController player)
+    /// <summary>Player stepped on / dashed through this cell. Returns true if caught this touch.</summary>
+    public bool TryTouch(PlayerController player, bool requirePlayerOnCell = true)
     {
         if (IsCaught || _flying || player == null)
             return false;
-        if (player.GridPos != GridPos)
+        if (requirePlayerOnCell && player.GridPos != GridPos)
             return false;
 
         _hits++;

@@ -41,6 +41,16 @@ public class GameData : ScriptableObject
     public int fullRewardBonus;
     [Tooltip("When remaining time is below 5s, each ground pickup adds a second food to hand.")]
     public bool lastMinute;
+    [Tooltip("Long-press a direction to dash until hole, enemy, or map edge.")]
+    public bool dash;
+    [Tooltip("Jump onto an enemy for 2x damage, then jump back.")]
+    public bool jumpAttack;
+    [Tooltip("Dash into the enemy ahead for 2x damage.")]
+    public bool dashAttack;
+    [Tooltip("When depositing food at the spaceship, damage all enemies.")]
+    public bool homeAttack;
+    [Tooltip("When hitting an enemy, pull one adjacent food to the player.")]
+    public bool attackAttract;
 
     [Header("Combat")]
     public int enemyHitsToKill = 3;
@@ -50,6 +60,10 @@ public class GameData : ScriptableObject
     public float moveDuration = 0.1f;
     public float jumpDuration = 0.28f;
     public float jumpPower = 0.85f;
+    [Tooltip("Hold duration before dash triggers.")]
+    public float dashHoldSeconds = 0.5f;
+    [Tooltip("Tween duration for a dash (very fast).")]
+    public float dashDuration = 0.06f;
 
     [Header("Carry Visual")]
     [Tooltip("Scale of food while carried on the player.")]

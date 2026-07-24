@@ -20,6 +20,23 @@ public class PlayerController : MonoBehaviour
     SpriteRenderer _sr;
     Vector2Int _lastMoveDir;
     int _iceChainDepth;
+    bool _suppressIceSlide;
+
+    // Dash hold input (only used when _data.dash).
+    Vector2Int _holdDir;
+    float _holdTime;
+    bool _holdActive;
+    bool _dashFiredThisHold;
+    readonly List<Vector2Int> _dashPath = new List<Vector2Int>(32);
+    readonly List<EnemyItem> _enemyBuffer = new List<EnemyItem>(16);
+    readonly List<FoodItem> _attractFoodBuffer = new List<FoodItem>(8);
+
+    static readonly Vector2Int[] AttractOctants =
+    {
+        new Vector2Int(-1, -1), new Vector2Int(0, -1), new Vector2Int(1, -1),
+        new Vector2Int(-1, 0),                         new Vector2Int(1, 0),
+        new Vector2Int(-1, 1),  new Vector2Int(0, 1),  new Vector2Int(1, 1)
+    };
 
     public void Setup(GridBoard board, GameData data, GameManager game, Vector2Int start, Sprite sprite)
     {
@@ -47,24 +64,92 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (_game == null || !_game.IsPlaying || IsBusy)
+        if (_game == null || !_game.IsPlaying)
             return;
 
-        Vector2Int dir = Vector2Int.zero;
-        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
-            dir = new Vector2Int(0, -1);
-        else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
-            dir = new Vector2Int(0, 1);
-        else if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
-            dir = new Vector2Int(-1, 0);
-        else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
-            dir = new Vector2Int(1, 0);
+        // Dash hold must accumulate during move tweens (IsBusy), so a press
+        // started mid-move still counts toward dashHoldSeconds after landing.
+        if (_data != null && _data.dash)
+            UpdateDashInput();
+        else if (!IsBusy)
+            UpdateStepInput();
+    }
 
-        if (dir != Vector2Int.zero)
+    void UpdateStepInput()
+    {
+        Vector2Int dir = ReadDirectionKeyDown();
+        if (dir == Vector2Int.zero)
+            return;
+
+        _iceChainDepth = 0;
+        TryMove(dir);
+    }
+
+    void UpdateDashInput()
+    {
+        Vector2Int pressed = ReadDirectionKeyDown();
+        if (pressed != Vector2Int.zero)
         {
-            _iceChainDepth = 0;
-            TryMove(dir);
+            _holdDir = pressed;
+            _holdTime = 0f;
+            _holdActive = true;
+            _dashFiredThisHold = false;
         }
+
+        if (!_holdActive)
+            return;
+
+        if (!IsDirectionHeld(_holdDir))
+        {
+            // Only step on release when idle; release mid-tween just cancels the hold.
+            if (!_dashFiredThisHold && !IsBusy)
+            {
+                _iceChainDepth = 0;
+                TryMove(_holdDir);
+            }
+
+            _holdActive = false;
+            _holdTime = 0f;
+            return;
+        }
+
+        _holdTime += Time.deltaTime;
+        if (IsBusy || _dashFiredThisHold)
+            return;
+
+        float holdNeed = _data.dashHoldSeconds > 0f ? _data.dashHoldSeconds : 0.5f;
+        if (_holdTime < holdNeed)
+            return;
+
+        _dashFiredThisHold = true;
+        _iceChainDepth = 0;
+        TryDash(_holdDir);
+    }
+
+    static Vector2Int ReadDirectionKeyDown()
+    {
+        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
+            return new Vector2Int(0, -1);
+        if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+            return new Vector2Int(0, 1);
+        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+            return new Vector2Int(-1, 0);
+        if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+            return new Vector2Int(1, 0);
+        return Vector2Int.zero;
+    }
+
+    static bool IsDirectionHeld(Vector2Int dir)
+    {
+        if (dir.y < 0)
+            return Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow);
+        if (dir.y > 0)
+            return Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow);
+        if (dir.x < 0)
+            return Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow);
+        if (dir.x > 0)
+            return Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow);
+        return false;
     }
 
     void TryMove(Vector2Int dir)
@@ -81,6 +166,8 @@ public class PlayerController : MonoBehaviour
 
             _game.NotifyPlayerActed();
             _lastMoveDir = dir;
+            if (jump && TryBeginJumpAttack(landing))
+                return;
             if (jump)
                 JumpToWrapped(landing, dir);
             else
@@ -112,10 +199,123 @@ public class PlayerController : MonoBehaviour
 
         _game.NotifyPlayerActed();
         _lastMoveDir = dir;
+        if (TryBeginJumpAttack(jumpLanding))
+            return;
+
         if (jumpWrapped)
             JumpToWrapped(jumpLanding, dir);
         else
             JumpTo(jumpLanding);
+    }
+
+    /// <summary>
+    /// Dash in a straight line until hole, enemy, blocked wall, or map edge.
+    /// Never wraps (ignores passBorder). Food / robots / boss on the path are collected like stepping on them.
+    /// With dashAttack, an enemy ahead becomes a 2x-damage attack destination.
+    /// </summary>
+    bool TryDash(Vector2Int dir)
+    {
+        if (dir == Vector2Int.zero || _board == null || _data == null)
+            return false;
+
+        if (!BuildDashPath(dir, out var end, out var attackEnemy))
+            return false;
+
+        _game.NotifyPlayerActed();
+        _lastMoveDir = dir;
+        _suppressIceSlide = true;
+
+        // Collect along the dash path (ground food, robot stores, boss) — same as stepping on cells.
+        for (int i = 0; i < _dashPath.Count; i++)
+        {
+            var cell = _dashPath[i];
+            while (_board.TryGetFood(cell, out var food) && CanCarryMore)
+                TryPickup(food);
+
+            if (_board.TryGetRobot(cell, out var robot))
+                robot.OfferToPlayer(this);
+
+            if (_board.HasBoss(cell) && _board.Boss != null)
+                _board.Boss.TryTouch(this, requirePlayerOnCell: false);
+        }
+
+        IsBusy = true;
+        Vector2Int attackFrom = end;
+        float dashDur = Mathf.Max(0.02f, _data.dashDuration);
+        transform.DOKill();
+        var seq = DOTween.Sequence();
+
+        if (_dashPath.Count > 0)
+        {
+            Vector3 endWorld = _board.CellToWorld(end);
+            seq.Append(transform.DOMove(endWorld, dashDur).SetEase(Ease.Linear));
+            seq.AppendCallback(() => { GridPos = end; });
+        }
+
+        if (attackEnemy != null)
+        {
+            Vector3 standWorld = _board.CellToWorld(end);
+            Vector3 enemyWorld = _board.CellToWorld(attackEnemy.GridPos);
+            int damage = Mathf.Max(1, _data.playerHitDamage) * 2;
+            seq.Append(transform.DOMove(enemyWorld, dashDur).SetEase(Ease.Linear));
+            seq.AppendCallback(() =>
+            {
+                if (attackEnemy != null && attackEnemy.IsAlive)
+                    ApplyEnemyHit(attackEnemy, attackFrom, damage);
+            });
+            seq.Append(transform.DOMove(standWorld, dashDur).SetEase(Ease.Linear));
+        }
+
+        seq.OnComplete(() =>
+        {
+            GridPos = end;
+            IsBusy = false;
+            AfterArrive();
+        });
+        return true;
+    }
+
+    bool BuildDashPath(Vector2Int dir, out Vector2Int end, out EnemyItem attackEnemy)
+    {
+        _dashPath.Clear();
+        end = GridPos;
+        attackEnemy = null;
+        var cell = GridPos;
+        int guard = _board.Map.Width * _board.Map.Height + 2;
+
+        for (int step = 0; step < guard; step++)
+        {
+            var next = cell + dir;
+
+            // Always stop at map edge — no wrap even with passBorder.
+            if (!_board.Map.InBounds(next.x, next.y))
+                break;
+
+            var type = _board.Map.GetCell(next.x, next.y);
+            if (type == MapCellType.Blocked)
+                break;
+
+            if (_board.TryGetEnemy(next, out var enemy) && enemy.IsAlive)
+            {
+                if (_data.dashAttack)
+                    attackEnemy = enemy;
+                break;
+            }
+
+            // Boss does not block dash — treated like a collectable on the path.
+            if (!_board.Map.IsWalkable(next.x, next.y))
+                break;
+
+            cell = next;
+            _dashPath.Add(cell);
+            end = cell;
+
+            // Stop on hole / spaceship.
+            if (_board.Map.IsStart(cell.x, cell.y))
+                break;
+        }
+
+        return _dashPath.Count > 0 || attackEnemy != null;
     }
 
     /// <summary>Ice auto-slide uses half duration (faster) vs player input moves.</summary>
@@ -159,6 +359,8 @@ public class PlayerController : MonoBehaviour
 
             _iceChainDepth++;
             _lastMoveDir = dir;
+            if (jump && TryBeginJumpAttack(landing))
+                return;
             if (jump)
                 JumpToWrapped(landing, dir, IceSlideDurationScale);
             else
@@ -190,6 +392,9 @@ public class PlayerController : MonoBehaviour
 
         _iceChainDepth++;
         _lastMoveDir = dir;
+        if (TryBeginJumpAttack(jumpLanding))
+            return;
+
         if (jumpWrapped)
             JumpToWrapped(jumpLanding, dir, IceSlideDurationScale);
         else
@@ -253,7 +458,7 @@ public class PlayerController : MonoBehaviour
         if (!_board.Map.IsWalkable(cell.x, cell.y))
             return false;
 
-        if (_board.TryGetEnemy(cell, out var enemy) && enemy.IsAlive)
+        if (_board.TryGetEnemy(cell, out var enemy) && enemy.IsAlive && !_data.jumpAttack)
             return false;
 
         landing = cell;
@@ -296,7 +501,7 @@ public class PlayerController : MonoBehaviour
         if (!_board.Map.IsWalkable(cell.x, cell.y))
             return false;
 
-        if (_board.TryGetEnemy(cell, out var enemy) && enemy.IsAlive)
+        if (_board.TryGetEnemy(cell, out var enemy) && enemy.IsAlive && !_data.jumpAttack)
             return false;
 
         landing = cell;
@@ -331,7 +536,7 @@ public class PlayerController : MonoBehaviour
         if (!_board.Map.IsWalkable(cell.x, cell.y))
             return false;
 
-        if (_board.TryGetEnemy(cell, out var enemy) && enemy.IsAlive)
+        if (_board.TryGetEnemy(cell, out var enemy) && enemy.IsAlive && !_data.jumpAttack)
             return false;
 
         landing = cell;
@@ -441,6 +646,13 @@ public class PlayerController : MonoBehaviour
 
         if (!_game.IsPlaying)
             return;
+
+        if (_suppressIceSlide)
+        {
+            _suppressIceSlide = false;
+            _iceChainDepth = 0;
+            return;
+        }
 
         if (_specials != null
             && _specials.IsIceSkate(GridPos)
@@ -576,6 +788,9 @@ public class PlayerController : MonoBehaviour
             _game.AddScore(score);
             _game.AddFoodProgress(progress);
             _game.NotifyCarryChanged();
+
+            if (_data.homeAttack)
+                HomeAttackAllEnemies();
         }
 
         if (_carriedBoss != null)
@@ -589,19 +804,100 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    void HomeAttackAllEnemies()
+    {
+        if (_board == null || _data == null)
+            return;
+
+        int damage = Mathf.Max(1, _data.playerHitDamage);
+        Vector2Int from = GridPos;
+        _board.GetEnemies(_enemyBuffer);
+        for (int i = 0; i < _enemyBuffer.Count; i++)
+        {
+            var enemy = _enemyBuffer[i];
+            if (enemy != null && enemy.IsAlive)
+                enemy.TakeHit(from, damage);
+        }
+    }
+
     void BumpEnemy(Vector2Int enemyCell, EnemyItem enemy)
     {
         IsBusy = true;
         Vector3 origin = transform.position;
         Vector3 bump = _board.CellToWorld(enemyCell);
         int damage = Mathf.Max(1, _data.playerHitDamage);
+        Vector2Int fromCell = GridPos;
 
         transform.DOKill();
         var seq = DOTween.Sequence();
         seq.Append(transform.DOMove(bump, _data.moveDuration * 0.6f).SetEase(Ease.OutQuad));
-        seq.AppendCallback(() => enemy.TakeHit(GridPos, damage));
+        seq.AppendCallback(() => ApplyEnemyHit(enemy, fromCell, damage));
         seq.Append(transform.DOMove(origin, _data.moveDuration * 0.6f).SetEase(Ease.InQuad));
         seq.OnComplete(() => { IsBusy = false; });
+    }
+
+    /// <summary>Jump onto enemy for 2x damage, then jump back to the takeoff cell.</summary>
+    bool TryBeginJumpAttack(Vector2Int enemyCell)
+    {
+        if (_data == null || !_data.jumpAttack)
+            return false;
+        if (!_board.TryGetEnemy(enemyCell, out var enemy) || !enemy.IsAlive)
+            return false;
+
+        JumpAttackEnemy(enemyCell, enemy);
+        return true;
+    }
+
+    void JumpAttackEnemy(Vector2Int enemyCell, EnemyItem enemy)
+    {
+        IsBusy = true;
+        Vector3 origin = transform.position;
+        Vector3 bump = _board.CellToWorld(enemyCell);
+        Vector2Int fromCell = GridPos;
+        int damage = Mathf.Max(1, _data.playerHitDamage) * 2;
+        float duration = Mathf.Max(0.01f, _data.jumpDuration);
+
+        transform.DOKill();
+        var seq = DOTween.Sequence();
+        seq.Append(transform.DOJump(bump, _data.jumpPower, 1, duration).SetEase(Ease.OutQuad));
+        seq.AppendCallback(() => ApplyEnemyHit(enemy, fromCell, damage));
+        seq.Append(transform.DOJump(origin, _data.jumpPower, 1, duration).SetEase(Ease.OutQuad));
+        seq.OnComplete(() => { IsBusy = false; });
+    }
+
+    void ApplyEnemyHit(EnemyItem enemy, Vector2Int fromCell, int damage)
+    {
+        if (enemy == null || !enemy.IsAlive)
+            return;
+
+        Vector2Int enemyCell = enemy.GridPos;
+        enemy.TakeHit(fromCell, damage);
+
+        if (_data != null && _data.attackAttract)
+            TryAttractAdjacentFood(enemyCell);
+    }
+
+    /// <summary>Pull one food adjacent to the hit enemy into the player's hands, if any.</summary>
+    void TryAttractAdjacentFood(Vector2Int enemyCell)
+    {
+        if (!CanCarryMore || _board == null)
+            return;
+
+        _attractFoodBuffer.Clear();
+        for (int i = 0; i < AttractOctants.Length; i++)
+        {
+            var cell = enemyCell + AttractOctants[i];
+            if (!_board.Map.InBounds(cell.x, cell.y))
+                continue;
+            if (_board.TryGetFood(cell, out var food) && food != null && !food.IsCarried)
+                _attractFoodBuffer.Add(food);
+        }
+
+        if (_attractFoodBuffer.Count == 0)
+            return;
+
+        var chosen = _attractFoodBuffer[Random.Range(0, _attractFoodBuffer.Count)];
+        TryPickup(chosen);
     }
 
     void OnDestroy()

@@ -133,9 +133,10 @@ public class SceneSpecialSystem : MonoBehaviour
                 result.LossTime = Mathf.Max(0f, Get(4, 3f));
                 break;
             case "iceSkate":
+                // iceSkate|几秒出现一次|出现持续多少时间
                 result.Kind = SpecialKind.IceSkate;
                 result.Interval = Mathf.Max(0.1f, Get(1, 3f));
-                result.ActiveTime = Mathf.Max(0.1f, tokens.Count >= 4 ? Get(3, 5f) : Get(2, 5f));
+                result.ActiveTime = Mathf.Max(0.1f, Get(2, 5f));
                 break;
             case "pointDamage2":
                 result.Kind = SpecialKind.PointDamage2;

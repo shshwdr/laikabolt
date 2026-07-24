@@ -102,6 +102,21 @@ public static class MetaSaveService
                 case "lastMinute":
                     config.lastMinute = true;
                     break;
+                case "dash":
+                    config.dash = true;
+                    break;
+                case "jumpAttack":
+                    config.jumpAttack = true;
+                    break;
+                case "dashAttack":
+                    config.dashAttack = true;
+                    break;
+                case "homeAttack":
+                    config.homeAttack = true;
+                    break;
+                case "attackAttract":
+                    config.attackAttract = true;
+                    break;
                 case "moveSpeed":
                     moveSpeedBonusPercent += info.value * level;
                     break;
