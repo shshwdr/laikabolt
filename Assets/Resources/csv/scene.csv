@@ -1,3 +1,6 @@
-﻿scene,name,desc,full,boss
-0,level 1,,5,eatMinion_20
-1,level 2,,6,eatMinion_30
+﻿scene,name,desc,full,boss,special,monsterHP
+0,Mars,,10,collectFly|3|4,,20
+1,Jupiter,,10,collectFly|3|5,pointDamage|3|0.5|5|3,10
+2,Saturn,,10,collectFly|3|6,lineDamage|3|0.5|5|3,15
+3,Uranus,,10,collectFly|3|7,iceSkate|3|0.5|5,20
+4,Neptune,,10,collectFly|3|8,pointDamage2|3|0.5|5|3,25

@@ -461,6 +461,10 @@ namespace Sinbad
                 // Case insensitive comparison
                 if (string.Compare(fieldName, f.Name, true) == 0)
                 {
+                    // Keep field initializers when CSV cell is blank (e.g. unlocked defaults to 1).
+                    if (f.FieldType != typeof(string) && string.IsNullOrWhiteSpace(val))
+                        return true;
+
                     // Might need to parse the string into the field type
                     object typedVal = f.FieldType == typeof(string) ? val : ParseString(val, f.FieldType);
                     f.SetValue(destObject, typedVal);

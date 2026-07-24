@@ -10,12 +10,19 @@ public class EnemyItem : MonoBehaviour
     SpriteRenderer _sr;
     GridBoard _board;
     GameData _data;
+    System.Action<Vector2Int> _onKilled;
     bool _flying;
 
-    public void Setup(GridBoard board, GameData data, Vector2Int cell, Sprite sprite)
+    public void Setup(
+        GridBoard board,
+        GameData data,
+        Vector2Int cell,
+        Sprite sprite,
+        System.Action<Vector2Int> onKilled = null)
     {
         _board = board;
         _data = data;
+        _onKilled = onKilled;
         GridPos = cell;
         HitsLeft = data.enemyHitsToKill;
         transform.position = board.CellToWorld(cell);
@@ -28,12 +35,12 @@ public class EnemyItem : MonoBehaviour
         board.RegisterEnemy(cell, this);
     }
 
-    /// <summary>Apply hit; returns true if the enemy died and flies away.</summary>
-    public bool TakeHit(Vector2Int fromCell)
+    /// <summary>Apply damage; returns true if the enemy died and flies away.</summary>
+    public bool TakeHit(Vector2Int fromCell, int damage = 1)
     {
         if (!IsAlive) return true;
 
-        HitsLeft--;
+        HitsLeft -= Mathf.Max(1, damage);
         transform.DOKill(false);
         transform.DOPunchScale(Vector3.one * 0.15f, 0.12f, 4, 0.5f);
 
@@ -47,7 +54,9 @@ public class EnemyItem : MonoBehaviour
     void FlyAway(Vector2Int fromCell)
     {
         _flying = true;
+        var dropCell = GridPos;
         _board.UnregisterEnemy(GridPos);
+        _onKilled?.Invoke(dropCell);
 
         Vector2 dir = (Vector2)(GridPos - fromCell);
         if (dir.sqrMagnitude < 0.01f)

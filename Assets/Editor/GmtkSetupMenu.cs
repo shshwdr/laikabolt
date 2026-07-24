@@ -4,6 +4,7 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 public static class GmtkSetupMenu
 {
@@ -64,17 +65,28 @@ public static class GmtkSetupMenu
         }
 
         var go = new GameObject("Game");
+        var explore = new GameObject("ExploreRoot");
+        explore.transform.SetParent(go.transform, false);
+        var upgrade = new GameObject("UpgradeRoot", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(UnityEngine.UI.GraphicRaycaster));
+        upgrade.transform.SetParent(go.transform, false);
+        var upgradeCanvas = upgrade.GetComponent<Canvas>();
+        upgradeCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        upgrade.GetComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        upgrade.SetActive(false);
+
         var gm = go.AddComponent<GameManager>();
         var map = AssetDatabase.LoadAssetAtPath<MapData>(MapPath);
         var data = AssetDatabase.LoadAssetAtPath<GameData>(DataPath);
         var so = new SerializedObject(gm);
         so.FindProperty("mapData").objectReferenceValue = map;
         so.FindProperty("gameData").objectReferenceValue = data;
+        so.FindProperty("exploreRoot").objectReferenceValue = explore;
+        so.FindProperty("upgradeRoot").objectReferenceValue = upgrade;
         so.ApplyModifiedPropertiesWithoutUndo();
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
-        Debug.Log("[GMTK] SampleScene ready with GameManager. Press Play.");
+        Debug.Log("[GMTK] SampleScene ready with GameManager + Explore/Upgrade roots. Wire ExploreView / GameOverView manually.");
     }
 
     static void EnsureFolder(string path)

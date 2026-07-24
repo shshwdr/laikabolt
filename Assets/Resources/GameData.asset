@@ -12,21 +12,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13b5b16b008547dfa48254722d8be56d, type: 3}
   m_Name: GameData
   m_EditorClassIdentifier: 
-  roundDuration: 15
-  collectableSpawnInterval: 1
+  roundDuration: 10
+  collectableSpawnInterval: 2
   enemySpawnInterval: 5
   initialCollectables: 3
   initialEnemies: 1
-  enemyHitsToKill: 3
+  holdItemCount: 3
+  playerHitDamage: 1
+  jumpDistance: 0
+  passBorder: 0
+  enemyFoodDrop: 0
+  foodCollectAmount: 0
+  machineCollect: 0
+  machineCollectInterval: 1
+  bonusGenerateChance: 0
+  enemyHitsToKill: 5
   cellSize: 1
   moveDuration: 0.1
-  carryScale: 0.5
+  jumpDuration: 0.28
+  jumpPower: 0.85
+  carryScale: 0.8
   carryBaseY: 0.35
-  carryStackHeightStep: 0.35
+  carryStackHeightStep: 0.7
+  groundStackHeightStep: 0.25
   enemyFlyDuration: 0.45
   enemyFlyJumpPower: 1.2
   enemyFlyDistance: 2.5
   playerSprite: {fileID: 0}
   foodSprite: {fileID: 0}
   monsterSprite: {fileID: 0}
+  robotSprite: {fileID: 0}
   tileSprite: {fileID: 0}

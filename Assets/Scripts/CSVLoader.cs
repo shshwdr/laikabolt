@@ -39,11 +39,37 @@ public class LevelInfo
 
 public class SceneInfo
 {
+    /// <summary>Preferred key for Maps/{id} and scene/{id}. Falls back to <see cref="scene"/>.</summary>
+    public string identifier;
+    /// <summary>Legacy / numeric id from CSV column "scene".</summary>
     public int scene;
     public string name;
     public string desc;
     public int full;
     public string boss;
+    /// <summary>Pipe-split special effect: type then params. Empty / first empty = none.</summary>
+    public List<string> special;
+    public int monsterHP;
+
+    public string ResolvedIdentifier
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(identifier))
+                return identifier;
+            return scene.ToString();
+        }
+    }
+
+    public int SceneId
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(identifier) && int.TryParse(identifier, out int fromId))
+                return fromId;
+            return scene;
+        }
+    }
 }
 
 
@@ -65,7 +91,7 @@ public static class CSVLoader
 {
     static readonly Dictionary<string, UpgradeInfo> upgradeDict = new Dictionary<string, UpgradeInfo>();
     static readonly Dictionary<string, List<UpgradeInfo>> childrenMap = new Dictionary<string, List<UpgradeInfo>>();
-    static readonly Dictionary<int, SceneInfo> sceneDict = new Dictionary<int, SceneInfo>();
+    static readonly Dictionary<string, SceneInfo> sceneDict = new Dictionary<string, SceneInfo>();
     static readonly Dictionary<int, List<LevelInfo>> levelByScene = new Dictionary<int, List<LevelInfo>>();
     static readonly Dictionary<string, List<TutorialInfo>> tutorialByIdentifier = new Dictionary<string, List<TutorialInfo>>();
     static bool initialized;
@@ -97,8 +123,13 @@ public static class CSVLoader
 
         foreach (var info in CsvUtil.LoadObjects<SceneInfo>("scene"))
         {
-            if (!sceneDict.ContainsKey(info.scene))
-                sceneDict[info.scene] = info;
+            string id = info.ResolvedIdentifier;
+            if (string.IsNullOrEmpty(id))
+                continue;
+
+            info.identifier = id;
+            if (!sceneDict.ContainsKey(id))
+                sceneDict[id] = info;
         }
 
         foreach (var info in CsvUtil.LoadObjects<LevelInfo>("level"))
@@ -185,10 +216,26 @@ public static class CSVLoader
         return !string.IsNullOrEmpty(identifier) && upgradeDict.ContainsKey(identifier);
     }
 
+    public static SceneInfo GetScene(string identifier)
+    {
+        if (string.IsNullOrEmpty(identifier))
+            return null;
+
+        sceneDict.TryGetValue(identifier, out var info);
+        return info;
+    }
+
     public static SceneInfo GetScene(int sceneId)
     {
-        sceneDict.TryGetValue(sceneId, out var info);
-        return info;
+        return GetScene(sceneId.ToString());
+    }
+
+    public static List<SceneInfo> GetAllScenes()
+    {
+        return sceneDict.Values
+            .OrderBy(s => s.SceneId)
+            .ThenBy(s => s.identifier)
+            .ToList();
     }
 
     public static List<LevelInfo> GetLevelRows(int sceneId)
@@ -199,14 +246,12 @@ public static class CSVLoader
         return rows;
     }
 
-    
-
     public static int GetMaxSceneId()
     {
         if (sceneDict.Count == 0)
             return 0;
 
-        return sceneDict.Keys.Max();
+        return sceneDict.Values.Max(s => s.SceneId);
     }
 
    

@@ -1,128 +1,875 @@
 using UnityEngine;
 
+
+
 public class GameManager : MonoBehaviour
+
 {
+
+    [Header("Data")]
+
     [SerializeField] MapData mapData;
+
     [SerializeField] GameData gameData;
 
+
+
+    [Header("Phase Roots (assign in scene)")]
+
+    [SerializeField] GameObject exploreRoot;
+
+    [SerializeField] GameObject upgradeRoot;
+
+
+
+    [Header("UI (assign in scene)")]
+
+    [SerializeField] ExploreView exploreView;
+
+    [SerializeField] GameOverView gameOverView;
+
+
+
     public bool IsPlaying { get; private set; }
+
     public int Score { get; private set; }
 
+    public int FoodProgress { get; private set; }
+
+    public int FoodTarget { get; private set; }
+
+    public string CurrentSceneId { get; private set; }
+
+    public bool SceneCleared { get; private set; }
+
+    public bool BossPhaseActive { get; private set; }
+
+
+
     GridBoard _board;
+
     PlayerController _player;
+
     SpawnSystem _spawn;
-    GameHUD _hud;
+
+    SceneSpecialSystem _specials;
+
+    BossCollectFly _boss;
+
+    UpgradePanelView _upgradePanel;
+
+    GameData _runtimeData;
+
+    MetaSaveData _metaSave;
+
+    SceneInfo _sceneInfo;
+
     float _timeLeft;
 
+    bool _timerStarted;
+
+    bool _runGoldSettled;
+
+    bool _hasCollectFlyBoss;
+
+    int _bossHitsNeeded = 3;
+
+    int _bossMinDistance = 4;
+
+
+
     public void Configure(MapData map, GameData data)
+
     {
+
         mapData = map;
+
         gameData = data;
+
     }
+
+
 
     void Start()
+
     {
-        if (mapData == null)
+
+        CSVLoader.Init();
+
+        _metaSave = MetaSaveService.Load();
+
+        CurrentSceneId = MetaSaveService.GetSelectedSceneId(_metaSave);
+
+        _sceneInfo = CSVLoader.GetScene(CurrentSceneId);
+
+        FoodTarget = _sceneInfo != null ? Mathf.Max(1, _sceneInfo.full) : 20;
+
+        ParseBossConfig();
+
+
+
+        var loadedMap = MetaSaveService.LoadMapForScene(CurrentSceneId);
+
+        if (loadedMap != null)
+
+            mapData = loadedMap;
+
+        else if (mapData == null)
+
             mapData = Resources.Load<MapData>("Maps/DefaultMap");
+
+
+
         if (gameData == null)
+
             gameData = Resources.Load<GameData>("GameData");
 
+
+
         if (mapData == null || gameData == null)
+
         {
-            Debug.LogError("[GameManager] Missing MapData or GameData (Resources/Maps/DefaultMap, Resources/GameData).");
+
+            Debug.LogError("[GameManager] Missing MapData or GameData (Resources/Maps/{scene}, Resources/GameData).");
+
             enabled = false;
+
             return;
+
         }
+
+
 
         if (!mapData.TryGetStart(out var start))
+
         {
+
             Debug.LogError("[GameManager] MapData has no Start(s) cell.");
+
             enabled = false;
+
             return;
+
         }
 
+
+
+        _runtimeData = MetaSaveService.ApplyUpgrades(gameData, _metaSave);
+
+        if (_sceneInfo != null && _sceneInfo.monsterHP > 0)
+
+            _runtimeData.enemyHitsToKill = _sceneInfo.monsterHP;
+
+
+
+        EnsureExploreView();
+
+        EnsureUpgradePanel();
+
+        EnsureCheatManager();
+
+        ApplyExploreMode();
+
+
+
+        if (gameOverView != null)
+
+            gameOverView.Setup(EnterUpgradeMode);
+
+
+
         BeginGame(start);
+
     }
 
-    void BeginGame(Vector2Int start)
+
+
+    void ParseBossConfig()
+
     {
+
+        _hasCollectFlyBoss = false;
+
+        BossPhaseActive = false;
+
+        if (_sceneInfo == null || string.IsNullOrEmpty(_sceneInfo.boss))
+
+            return;
+
+
+
+        string[] parts = _sceneInfo.boss.Split('|');
+
+        if (parts.Length == 0 || string.IsNullOrEmpty(parts[0]))
+
+            return;
+
+
+
+        if (parts[0].Trim() != "collectFly")
+
+            return;
+
+
+
+        _hasCollectFlyBoss = true;
+
+        if (parts.Length > 1 && int.TryParse(parts[1], out int hits))
+
+            _bossHitsNeeded = Mathf.Max(1, hits);
+
+        if (parts.Length > 2 && int.TryParse(parts[2], out int dist))
+
+            _bossMinDistance = Mathf.Max(1, dist);
+
+    }
+
+
+
+    void EnsureExploreView()
+
+    {
+
+        if (exploreView == null && exploreRoot != null)
+
+            exploreView = exploreRoot.GetComponent<ExploreView>()
+
+                ?? exploreRoot.GetComponentInChildren<ExploreView>(true);
+
+
+
+        if (exploreView != null)
+
+            exploreView.Setup(EndGame, CurrentSceneId);
+
+    }
+
+
+
+    void EnsureUpgradePanel()
+
+    {
+
+        if (upgradeRoot == null)
+
+            return;
+
+
+
+        _upgradePanel = upgradeRoot.GetComponent<UpgradePanelView>();
+
+        if (_upgradePanel == null)
+
+            _upgradePanel = upgradeRoot.AddComponent<UpgradePanelView>();
+
+
+
+        _upgradePanel.Setup(_metaSave, StartNextRun);
+
+    }
+
+
+
+    void EnsureCheatManager()
+
+    {
+
+        if (GetComponent<CheatManager>() == null)
+
+            gameObject.AddComponent<CheatManager>();
+
+    }
+
+
+
+    Transform GetExploreParent()
+
+    {
+
+        return exploreRoot != null ? exploreRoot.transform : transform;
+
+    }
+
+
+
+    void ApplyExploreMode()
+
+    {
+
+        if (exploreRoot != null)
+
+            exploreRoot.SetActive(true);
+
+        if (upgradeRoot != null)
+
+            upgradeRoot.SetActive(false);
+
+    }
+
+
+
+    public void EnterUpgradeMode()
+
+    {
+
+        IsPlaying = false;
+
+        if (_spawn != null)
+
+            _spawn.Stop();
+
+        if (_specials != null)
+
+            _specials.Stop();
+
+
+
+        SettleRunGold();
+
+
+
+        if (exploreRoot != null)
+
+            exploreRoot.SetActive(false);
+
+        if (upgradeRoot != null)
+
+            upgradeRoot.SetActive(true);
+
+
+
+        if (_upgradePanel != null)
+
+            _upgradePanel.OnShown();
+
+    }
+
+
+
+    void SettleRunGold()
+
+    {
+
+        if (_runGoldSettled)
+
+            return;
+
+
+
+        _runGoldSettled = true;
+
+        int runGold = Score;
+
+        var save = MetaSaveService.Load();
+
+        save.MetaGold += runGold;
+
+        MetaSaveService.Save(save);
+
+        _metaSave = save;
+
+    }
+
+
+
+    void StartNextRun()
+
+    {
+
+        SceneFlowService.ReloadActiveScene();
+
+    }
+
+
+
+    void BeginGame(Vector2Int start)
+
+    {
+
+        Transform parent = GetExploreParent();
+
+
+
         var boardGo = new GameObject("Board");
-        boardGo.transform.SetParent(transform, false);
+
+        boardGo.transform.SetParent(parent, false);
+
         _board = boardGo.AddComponent<GridBoard>();
-        _board.Init(mapData, gameData);
+
+        _board.Init(mapData, _runtimeData);
+
+
 
         var playerSprite = SpriteUtil.LoadOr(gameData.playerSprite, "render/player");
+
         var foodSprite = SpriteUtil.LoadOr(gameData.foodSprite, "render/food");
+
         var monsterSprite = SpriteUtil.LoadOr(gameData.monsterSprite, "render/monster");
 
+        var robotSprite = SpriteUtil.LoadOr(gameData.robotSprite, "render/robot");
+
+
+
         if (playerSprite == null || foodSprite == null || monsterSprite == null)
+
             Debug.LogWarning("[GameManager] Some sprites failed to load from Resources/render.");
 
+
+
         var playerGo = new GameObject("Player");
+
         playerGo.transform.SetParent(_board.EntityRoot, false);
+
         _player = playerGo.AddComponent<PlayerController>();
-        _player.Setup(_board, gameData, this, start, playerSprite != null ? playerSprite : SpriteUtil.WhiteSprite());
+
+        _player.Setup(_board, _runtimeData, this, start, playerSprite != null ? playerSprite : SpriteUtil.WhiteSprite());
+
+
 
         _spawn = gameObject.AddComponent<SpawnSystem>();
-        _spawn.Init(_board, gameData, _player,
-            foodSprite != null ? foodSprite : SpriteUtil.WhiteSprite(),
-            monsterSprite != null ? monsterSprite : SpriteUtil.WhiteSprite());
 
-        var hudGo = new GameObject("HUD");
-        hudGo.transform.SetParent(transform, false);
-        _hud = hudGo.AddComponent<GameHUD>();
-        _hud.Build();
-        _hud.SetScore(0);
-        _hud.SetCarry(0);
+        _spawn.Init(_board, _runtimeData, _player, this,
+
+            foodSprite != null ? foodSprite : SpriteUtil.WhiteSprite(),
+
+            monsterSprite != null ? monsterSprite : SpriteUtil.WhiteSprite(),
+
+            robotSprite != null ? robotSprite : SpriteUtil.WhiteSprite());
+
+
+
+        _specials = gameObject.AddComponent<SceneSpecialSystem>();
+
+        _specials.Init(_board, _runtimeData, this, _player,
+
+            _sceneInfo != null ? _sceneInfo.special : null);
+
+        _player.BindSpecials(_specials);
+
+
+
+        if (exploreView != null)
+
+        {
+
+            exploreView.Setup(EndGame, CurrentSceneId);
+
+            exploreView.SetScore(0);
+
+            exploreView.SetFoodProgress(0, FoodTarget);
+
+        }
+
+        NotifyCarryChanged();
+
+
 
         CenterCamera();
 
-        _timeLeft = gameData.roundDuration;
+
+
+        _timeLeft = _runtimeData.roundDuration;
+
+        _timerStarted = false;
+
         IsPlaying = true;
-        _spawn.StartSpawning();
-        _hud.SetTimer(_timeLeft);
+
+        SceneCleared = false;
+
+        BossPhaseActive = false;
+
+        FoodProgress = 0;
+
+        _boss = null;
+
+        _spawn.SpawnInitial();
+
+        if (exploreView != null)
+
+            exploreView.SetTimer(_timeLeft);
+
     }
+
+
+
+    /// <summary>Starts round countdown and timed spawning on the player's first successful action.</summary>
+
+    public void NotifyPlayerActed()
+
+    {
+
+        if (_timerStarted || !IsPlaying)
+
+            return;
+
+
+
+        _timerStarted = true;
+
+        if (_spawn != null)
+
+            _spawn.StartTimedSpawning();
+
+        if (_specials != null)
+
+            _specials.StartRunning();
+
+    }
+
+
+
+    public void ShowFullToast()
+
+    {
+
+        if (exploreView != null)
+
+            exploreView.ShowToast("Full!");
+
+    }
+
+
+
+    public void ShowBossCaughtToast()
+
+    {
+
+        if (exploreView != null)
+
+            exploreView.ShowToast("Caught! Return to hole!");
+
+    }
+
+
 
     void CenterCamera()
+
     {
+
         var cam = Camera.main;
+
         if (cam == null) return;
+
         cam.orthographic = true;
-        float w = (mapData.Width - 1) * gameData.cellSize;
-        float h = (mapData.Height - 1) * gameData.cellSize;
+
+        float w = (mapData.Width - 1) * _runtimeData.cellSize;
+
+        float h = (mapData.Height - 1) * _runtimeData.cellSize;
+
         cam.transform.position = new Vector3(w * 0.5f, h * 0.5f, -10f);
-        float halfH = mapData.Height * gameData.cellSize * 0.5f + 0.75f;
-        float halfW = mapData.Width * gameData.cellSize * 0.5f + 0.75f;
+
+        float halfH = mapData.Height * _runtimeData.cellSize * 0.5f + 0.75f;
+
+        float halfW = mapData.Width * _runtimeData.cellSize * 0.5f + 0.75f;
+
         float aspect = cam.aspect > 0.01f ? cam.aspect : 16f / 9f;
+
         cam.orthographicSize = Mathf.Max(halfH, halfW / aspect);
+
     }
+
+
 
     void Update()
+
     {
-        if (!IsPlaying) return;
+
+        if (!IsPlaying || !_timerStarted)
+
+            return;
+
+
 
         _timeLeft -= Time.deltaTime;
-        _hud.SetTimer(_timeLeft);
+
+        if (exploreView != null)
+
+            exploreView.SetTimer(_timeLeft);
+
         if (_timeLeft <= 0f)
+
             EndGame();
+
     }
+
+
+
+    public void ApplyTimeDamage(float seconds)
+
+    {
+
+        if (!IsPlaying || seconds <= 0f)
+
+            return;
+
+
+
+        _timeLeft -= seconds;
+
+        if (exploreView != null)
+
+            exploreView.SetTimer(_timeLeft);
+
+
+
+        if (_timeLeft <= 0f)
+
+            EndGame();
+
+    }
+
+
 
     public void AddScore(int amount)
+
     {
+
         Score += amount;
-        _hud.SetScore(Score);
+
+        if (exploreView != null)
+
+            exploreView.SetScore(Score);
+
     }
+
+
+
+    /// <summary>Cheat: instantly deposit food into the hole during explore.</summary>
+
+    public void CheatDepositFood(int count)
+
+    {
+
+        if (!IsPlaying || count <= 0 || _runtimeData == null)
+
+            return;
+
+
+
+        int score = count * (1 + Mathf.Max(0, _runtimeData.foodCollectAmount));
+
+        AddScore(score);
+
+        AddFoodProgress(count);
+
+    }
+
+
+
+    /// <summary>Each food deposited into the hole adds 1 progress toward scene.full.</summary>
+
+    public void AddFoodProgress(int amount)
+
+    {
+
+        if (!IsPlaying || SceneCleared || amount <= 0)
+
+            return;
+
+
+
+        FoodProgress = Mathf.Min(FoodTarget, FoodProgress + amount);
+
+        if (exploreView != null)
+
+            exploreView.SetFoodProgress(FoodProgress, FoodTarget);
+
+
+
+        if (FoodProgress < FoodTarget)
+
+            return;
+
+
+
+        // Progress bar full: trigger boss if configured, otherwise clear.
+
+        if (_hasCollectFlyBoss)
+
+        {
+
+            if (!BossPhaseActive)
+
+                BeginBossPhase();
+
+            return;
+
+        }
+
+
+
+        CompleteSceneClear();
+
+    }
+
+
+
+    void BeginBossPhase()
+
+    {
+
+        BossPhaseActive = true;
+
+        if (exploreView != null)
+
+            exploreView.ShowToast("Boss appeared!");
+
+
+
+        Vector2Int from = _player != null ? _player.GridPos : Vector2Int.zero;
+
+        if (!BossCollectFly.TryPickSpawnCell(_board, from, _bossMinDistance, out var cell))
+
+        {
+
+            Debug.LogWarning("[GameManager] No cell for collectFly boss.");
+
+            CompleteSceneClear();
+
+            return;
+
+        }
+
+
+
+        var sprite = Resources.Load<Sprite>("sceneItems/ufo");
+
+        if (sprite == null)
+
+            sprite = SpriteUtil.WhiteSprite();
+
+
+
+        var go = new GameObject("BossCollectFly");
+
+        go.transform.SetParent(_board.EntityRoot, false);
+
+        _boss = go.AddComponent<BossCollectFly>();
+
+        _boss.Setup(_board, _runtimeData, this, _player, cell, sprite, _bossHitsNeeded, _bossMinDistance);
+
+    }
+
+
+
+    public bool TryTouchBoss(PlayerController player)
+
+    {
+
+        if (!BossPhaseActive || _boss == null || player == null)
+
+            return false;
+
+        if (_boss.IsCaught || _boss.IsFlying)
+
+            return false;
+
+        if (_boss.GridPos != player.GridPos)
+
+            return false;
+
+
+
+        return _boss.TryTouch(player);
+
+    }
+
+
+
+    public void NotifyBossDeposited()
+
+    {
+
+        if (!IsPlaying || SceneCleared)
+
+            return;
+
+
+
+        _boss = null;
+
+        CompleteSceneClear();
+
+    }
+
+
+
+    void CompleteSceneClear()
+
+    {
+
+        if (SceneCleared)
+
+            return;
+
+
+
+        SceneCleared = true;
+
+        var save = MetaSaveService.Load();
+
+        MetaSaveService.ClearScene(save, CurrentSceneId);
+
+        _metaSave = save;
+
+
+
+        if (exploreView != null)
+
+            exploreView.ShowToast("Cleared!");
+
+
+
+        EndGame();
+
+    }
+
+
 
     public void NotifyCarryChanged()
+
     {
-        if (_player != null)
-            _hud.SetCarry(_player.CarryCount);
+
+        if (_player != null && exploreView != null)
+
+            exploreView.SetCarry(_player.CarryCount, _runtimeData.holdItemCount);
+
     }
 
-    void EndGame()
+
+
+    public void EndGame()
+
     {
+
+        if (!IsPlaying)
+
+            return;
+
+
+
         IsPlaying = false;
-        _spawn.Stop();
-        _hud.ShowEnd(Score);
+
+        if (_spawn != null)
+
+            _spawn.Stop();
+
+        if (_specials != null)
+
+            _specials.Stop();
+
+
+
+        if (gameOverView != null)
+
+            gameOverView.Show(Score, SceneCleared);
+
+        else
+
+            EnterUpgradeMode();
+
     }
+
 }
+
+
