@@ -74,7 +74,7 @@ public static class MetaSaveService
                     config.passBorder = true;
                     break;
                 case "enemyFood":
-                    config.enemyFoodDrop += info.value * level;
+                    config.enemyFoodBonus += info.value * level;
                     break;
                 case "enemyFoodChance":
                     config.enemyFoodChance += info.value * level;
@@ -88,6 +88,9 @@ public static class MetaSaveService
                     config.machineCollectInterval = info.value * level;
                     break;
                 case "bonusGenerate":
+                    config.bonusGenerateBonus += info.value * level;
+                    break;
+                case "bonusGenerateChance":
                     config.bonusGenerateChance += info.value * level;
                     break;
                 case "foodGenerate":
@@ -118,7 +121,7 @@ public static class MetaSaveService
                     config.homeAttack = true;
                     break;
                 case "attackAttract":
-                    config.attackAttract = true;
+                    config.attackAttractCount += info.value * level;
                     break;
                 case "moveSpeed":
                     moveSpeedBonusPercent += info.value * level;

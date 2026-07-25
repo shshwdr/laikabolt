@@ -418,7 +418,7 @@ public class GameManager : MonoBehaviour
         EnsureTutorialTarget(playerGo, "player");
 
         _spawn = gameObject.AddComponent<SpawnSystem>();
-        _spawn.Init(_board, _runtimeData, _player, this);
+        _spawn.Init(_board, _runtimeData, _player, this, CurrentSceneId);
 
         _specials = gameObject.AddComponent<SceneSpecialSystem>();
         _specials.Init(_board, _runtimeData, this, _player,
@@ -576,6 +576,9 @@ public class GameManager : MonoBehaviour
 
     void EndGameByTimeout()
     {
+        // Mid-move into home past halfway still counts as arrived (deposit + finalSafe).
+        if (_player != null)
+            _player.TryCommitHomeArrivalForTimeout();
         TryApplyFinalSafeBonus();
         EndGame();
     }

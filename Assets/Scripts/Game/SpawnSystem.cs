@@ -4,7 +4,6 @@ using UnityEngine;
 public class SpawnSystem : MonoBehaviour
 {
     const string FoodPrefabPath = "prefab/food";
-    const string MonsterPrefabPath = "prefab/monster";
     const string RobotPrefabPath = "prefab/robot";
 
     static readonly Vector2Int[] Cardinals =
@@ -26,6 +25,7 @@ public class SpawnSystem : MonoBehaviour
     GameData _data;
     PlayerController _player;
     GameManager _game;
+    string _monsterPrefabPath = "prefab/monster0";
     float _foodTimer;
     float _enemyTimer;
     readonly List<Vector2Int> _candidates = new List<Vector2Int>(32);
@@ -35,12 +35,15 @@ public class SpawnSystem : MonoBehaviour
         GridBoard board,
         GameData data,
         PlayerController player,
-        GameManager game)
+        GameManager game,
+        string sceneIdentifier = null)
     {
         _board = board;
         _data = data;
         _player = player;
         _game = game;
+        string id = string.IsNullOrEmpty(sceneIdentifier) ? "0" : sceneIdentifier;
+        _monsterPrefabPath = "prefab/monster" + id;
     }
 
     public void SpawnInitial()
@@ -99,7 +102,7 @@ public class SpawnSystem : MonoBehaviour
     void TrySpawnEnemy()
     {
         if (!TryPickCell(out var cell)) return;
-        var go = PrefabUtil.Instantiate(MonsterPrefabPath, _board.EntityRoot, "Enemy");
+        var go = PrefabUtil.Instantiate(_monsterPrefabPath, _board.EntityRoot, "Enemy");
         PrefabUtil.EnsureAnimPlayer(go);
         var enemy = go.GetComponent<EnemyItem>();
         if (enemy == null)
@@ -109,10 +112,12 @@ public class SpawnSystem : MonoBehaviour
 
     void DropFoodFromEnemy(Vector2Int origin)
     {
+        // Guaranteed drop; bonus roll only if enemyFood upgrade purchased.
         int count = Mathf.Max(0, _data.enemyFoodDrop);
-        // Base chance (GameData) + enemyFoodChance upgrades: roll for +1 extra food.
-        if (_data.enemyFoodChance > 0 && Random.Range(0f, 100f) < _data.enemyFoodChance)
-            count += 1;
+        if (_data.enemyFoodBonus > 0
+            && _data.enemyFoodChance > 0
+            && Random.Range(0f, 100f) < _data.enemyFoodChance)
+            count += _data.enemyFoodBonus;
 
         if (count <= 0)
             return;
@@ -138,12 +143,18 @@ public class SpawnSystem : MonoBehaviour
 
     void SpawnFoodAt(Vector2Int cell, bool rollBonus)
     {
+        // Always spawn one; bonus roll only if bonusGenerate upgrade purchased.
         CreateFood(cell);
 
-        if (!rollBonus || _data.bonusGenerateChance <= 0)
+        if (!rollBonus
+            || _data.bonusGenerateBonus <= 0
+            || _data.bonusGenerateChance <= 0)
             return;
 
-        if (Random.Range(0f, 100f) < _data.bonusGenerateChance)
+        if (Random.Range(0f, 100f) >= _data.bonusGenerateChance)
+            return;
+
+        for (int i = 0; i < _data.bonusGenerateBonus; i++)
             CreateFood(cell);
     }
 

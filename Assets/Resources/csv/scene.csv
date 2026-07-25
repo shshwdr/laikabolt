@@ -1,4 +1,4 @@
 ﻿scene,name,desc,full,boss,special,monsterHP
 0,Mars,,10,collectFly|4|4,,3
-1,Jupiter,,20,collectFly|5|5,pointDamage|3|1|5|3,5
-2,Saturn,,30,collectFly|6|6,lineDamage|6|1|5|3,10
+1,Jupiter,,20,collectFly|5|5,pointDamage|3|1|5|3,10
+2,Saturn,,30,collectFly|6|6,lineDamage|6|1|5|3,16

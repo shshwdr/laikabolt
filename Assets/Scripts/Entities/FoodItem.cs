@@ -5,6 +5,7 @@ public class FoodItem : MonoBehaviour
 {
     public Vector2Int GridPos { get; private set; }
     public bool IsCarried => _carried;
+    public bool IsAttractFlying { get; private set; }
 
     SpriteRenderer _sr;
     GridBoard _board;
@@ -70,6 +71,37 @@ public class FoodItem : MonoBehaviour
     }
 
     /// <summary>
+    /// Attack-attract: fly from the ore's world cell onto Laika's carry stack.
+    /// </summary>
+    public void BeginAttractCarry(Transform carryRoot, int stackIndex, GameData data)
+    {
+        if (_carried) return;
+        _carried = true;
+        IsAttractFlying = true;
+        if (_board != null)
+            _board.UnregisterFood(this);
+
+        transform.SetParent(carryRoot, true);
+        transform.DOKill();
+
+        Vector3 halfScale = transform.localScale * data.carryScale;
+        float y = data.carryBaseY + stackIndex * data.carryStackHeightStep;
+        float dur = 0.28f;
+        float jump = data != null ? data.cellSize * 0.55f : 0.55f;
+        int capturedIndex = stackIndex;
+        var seq = DOTween.Sequence();
+        seq.Join(transform.DOLocalJump(new Vector3(0f, y, 0f), jump, 1, dur).SetEase(Ease.OutQuad));
+        seq.Join(transform.DOScale(halfScale, dur).SetEase(Ease.OutQuad));
+        seq.OnComplete(() =>
+        {
+            IsAttractFlying = false;
+            SnapCarryStack(capturedIndex, data);
+        });
+        if (_sr != null)
+            _sr.sortingOrder = 12 + stackIndex;
+    }
+
+    /// <summary>
     /// Immediately leaves the board cell, then animates onto a machine stack.
     /// </summary>
     public void BeginMachineCarry(Transform carryRoot, int stackIndex, GameData data, float duration, System.Action onComplete)
@@ -95,6 +127,7 @@ public class FoodItem : MonoBehaviour
     public void TransferToCarry(Transform carryRoot, int stackIndex, GameData data)
     {
         _carried = true;
+        IsAttractFlying = false;
         transform.SetParent(carryRoot, true);
         transform.DOKill();
         SnapCarryStack(stackIndex, data);
@@ -102,6 +135,13 @@ public class FoodItem : MonoBehaviour
 
     public void SnapCarryStack(int stackIndex, GameData data)
     {
+        if (IsAttractFlying)
+        {
+            if (_sr != null)
+                _sr.sortingOrder = 12 + stackIndex;
+            return;
+        }
+
         float y = data.carryBaseY + stackIndex * data.carryStackHeightStep;
         transform.localPosition = new Vector3(0f, y, 0f);
         if (_sr != null)

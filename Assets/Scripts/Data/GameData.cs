@@ -21,9 +21,11 @@ public class GameData : ScriptableObject
     public int jumpDistance = 0;
     [Tooltip("Wrap around map edges when moving off-bounds.")]
     public bool passBorder;
-    [Tooltip("Food items dropped when an enemy is killed (base; enemyFood upgrades add more).")]
+    [Tooltip("Guaranteed food dropped when an enemy is killed.")]
     public int enemyFoodDrop = 1;
-    [Tooltip("Percent chance to drop one extra food on kill (base 20%; enemyFoodChance upgrades add more).")]
+    [Tooltip("Extra food amount on successful chance roll (from enemyFood upgrades). Roll only happens if > 0.")]
+    public int enemyFoodBonus;
+    [Tooltip("Percent chance for enemyFoodBonus extra drop (base 20%; enemyFoodChance upgrades add more). Only used when enemyFoodBonus > 0.")]
     public int enemyFoodChance = 20;
     [Tooltip("Bonus per deposited food: score = count * (1 + foodCollectAmount).")]
     public int foodCollectAmount;
@@ -33,13 +35,15 @@ public class GameData : ScriptableObject
     public int machineCollectCount;
     [Tooltip("Seconds between each food grab by the collect robot.")]
     public float machineCollectInterval = 1f;
-    [Tooltip("Percent chance to spawn one extra stacked food when generating food.")]
-    public int bonusGenerateChance;
+    [Tooltip("Extra ore amount on successful spawn chance roll (from bonusGenerate). Roll only if > 0.")]
+    public int bonusGenerateBonus;
+    [Tooltip("Percent chance for bonusGenerateBonus extra spawn (base 20%; bonusGenerateChance upgrades add more). Only used when bonusGenerateBonus > 0.")]
+    public int bonusGenerateChance = 20;
 
     [Header("Upgrade Effects")]
     [Tooltip("When time expires on Start/spaceship, Score += Score * percent / 100.")]
     public int finalSafePercent;
-    [Tooltip("When depositing with a full carriage, flat bonus score (value x level from upgrade).")]
+    [Tooltip("When delivering to spaceship, flat bonus ore (value x level from upgrade).")]
     public int fullRewardBonus;
     [Tooltip("When remaining time is below 5s, each ground pickup adds a second food to hand.")]
     public bool lastMinute;
@@ -51,8 +55,8 @@ public class GameData : ScriptableObject
     public bool dashAttack;
     [Tooltip("When depositing food at the spaceship, damage all enemies.")]
     public bool homeAttack;
-    [Tooltip("When hitting an enemy, pull one adjacent food to the player.")]
-    public bool attackAttract;
+    [Tooltip("When hitting an enemy, pull this many adjacent ore to the player (value x level).")]
+    public int attackAttractCount;
 
     [Header("Combat")]
     public int enemyHitsToKill = 3;

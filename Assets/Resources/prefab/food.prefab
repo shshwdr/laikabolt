@@ -11,7 +11,7 @@ PrefabInstance:
     - target: {fileID: 239885124275908530, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 9f94c42d5d832304c951c25f5b9a718a, type: 3}
+      objectReference: {fileID: 21300000, guid: 2c5223a3866483b4ba2dfd070532d7bb, type: 3}
     - target: {fileID: 914729217804828831, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: m_Name
       value: food
@@ -55,6 +55,10 @@ PrefabInstance:
     - target: {fileID: 5300874969197863331, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5666463460036181938, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
+      propertyPath: sizeScale
+      value: 0.8
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

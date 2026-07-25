@@ -22,12 +22,14 @@ MonoBehaviour:
   jumpDistance: 0
   passBorder: 0
   enemyFoodDrop: 1
+  enemyFoodBonus: 0
   enemyFoodChance: 20
   foodCollectAmount: 0
   machineCollect: 0
   machineCollectCount: 0
   machineCollectInterval: 1
-  bonusGenerateChance: 0
+  bonusGenerateBonus: 0
+  bonusGenerateChance: 20
   finalSafePercent: 0
   fullRewardBonus: 0
   lastMinute: 0
@@ -35,7 +37,7 @@ MonoBehaviour:
   jumpAttack: 0
   dashAttack: 0
   homeAttack: 0
-  attackAttract: 0
+  attackAttractCount: 0
   enemyHitsToKill: 5
   cellSize: 1
   moveDuration: 0.4

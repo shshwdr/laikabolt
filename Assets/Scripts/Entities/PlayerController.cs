@@ -23,6 +23,11 @@ public class PlayerController : MonoBehaviour
     bool _suppressIceSlide;
     bool _isDashing;
 
+    // Active cell-to-cell move (GridPos updates only on complete).
+    bool _hasActiveMove;
+    Vector2Int _moveOrigin;
+    Vector2Int _moveDestination;
+
     // Dash hold input (only used when _data.dash).
     Vector2Int _holdDir;
     float _holdTime;
@@ -270,6 +275,7 @@ public class PlayerController : MonoBehaviour
         }
 
         IsBusy = true;
+        BeginActiveMove(end);
         Vector2Int attackFrom = end;
         float dashDur = Mathf.Max(0.02f, _data.dashDuration);
         transform.DOKill();
@@ -301,6 +307,7 @@ public class PlayerController : MonoBehaviour
             GridPos = end;
             IsBusy = false;
             _isDashing = false;
+            ClearActiveMove();
             RefreshVisual();
             AfterArrive();
         });
@@ -578,6 +585,7 @@ public class PlayerController : MonoBehaviour
     void MoveTo(Vector2Int target, float durationScale = 1f)
     {
         IsBusy = true;
+        BeginActiveMove(target);
         Vector3 world = _board.CellToWorld(target);
         float duration = Mathf.Max(0.01f, _data.moveDuration * durationScale);
         transform.DOKill();
@@ -587,6 +595,7 @@ public class PlayerController : MonoBehaviour
             {
                 GridPos = target;
                 IsBusy = false;
+                ClearActiveMove();
                 AfterArrive();
             });
     }
@@ -594,6 +603,7 @@ public class PlayerController : MonoBehaviour
     void JumpTo(Vector2Int target, float durationScale = 1f)
     {
         IsBusy = true;
+        BeginActiveMove(target);
         Vector3 world = _board.CellToWorld(target);
         float duration = Mathf.Max(0.01f, _data.jumpDuration * durationScale);
         transform.DOKill();
@@ -603,6 +613,7 @@ public class PlayerController : MonoBehaviour
             {
                 GridPos = target;
                 IsBusy = false;
+                ClearActiveMove();
                 AfterArrive();
             });
     }
@@ -610,6 +621,7 @@ public class PlayerController : MonoBehaviour
     void MoveToWrapped(Vector2Int target, Vector2Int dir, float durationScale = 1f)
     {
         IsBusy = true;
+        BeginActiveMove(target);
         Vector3 worldDir = DirToWorld(dir);
         Vector3 exit = transform.position + worldDir * (_data.cellSize * 0.55f);
         Vector3 end = _board.CellToWorld(target);
@@ -625,6 +637,7 @@ public class PlayerController : MonoBehaviour
         {
             GridPos = target;
             IsBusy = false;
+            ClearActiveMove();
             AfterArrive();
         });
     }
@@ -632,6 +645,7 @@ public class PlayerController : MonoBehaviour
     void JumpToWrapped(Vector2Int target, Vector2Int dir, float durationScale = 1f)
     {
         IsBusy = true;
+        BeginActiveMove(target);
         Vector3 worldDir = DirToWorld(dir);
         Vector3 exit = transform.position + worldDir * (_data.cellSize * 0.55f);
         Vector3 end = _board.CellToWorld(target);
@@ -647,8 +661,64 @@ public class PlayerController : MonoBehaviour
         {
             GridPos = target;
             IsBusy = false;
+            ClearActiveMove();
             AfterArrive();
         });
+    }
+
+    void BeginActiveMove(Vector2Int destination)
+    {
+        _hasActiveMove = true;
+        _moveOrigin = GridPos;
+        _moveDestination = destination;
+    }
+
+    void ClearActiveMove()
+    {
+        _hasActiveMove = false;
+    }
+
+    /// <summary>
+    /// On timeout: if already on home, or mid-move into home past halfway, snap in and deposit.
+    /// </summary>
+    public bool TryCommitHomeArrivalForTimeout()
+    {
+        if (_board == null)
+            return false;
+
+        if (_board.Map.IsStart(GridPos.x, GridPos.y))
+            return true;
+
+        if (!IsHalfwayIntoHome())
+            return false;
+
+        transform.DOKill(false);
+        GridPos = _moveDestination;
+        transform.position = _board.CellToWorld(GridPos);
+        IsBusy = false;
+        _isDashing = false;
+        ClearActiveMove();
+        RefreshVisual();
+
+        if (_carried.Count > 0 || _carriedBoss != null)
+            Deposit();
+
+        return true;
+    }
+
+    bool IsHalfwayIntoHome()
+    {
+        if (!_hasActiveMove || !_board.Map.IsStart(_moveDestination.x, _moveDestination.y))
+            return false;
+
+        Vector3 from = _board.CellToWorld(_moveOrigin);
+        Vector3 to = _board.CellToWorld(_moveDestination);
+        float total = Vector3.Distance(from, to);
+        if (total < 0.0001f)
+            return true;
+
+        float traveled = Vector3.Distance(from, transform.position);
+        return traveled >= total * 0.5f;
     }
 
     static Vector3 DirToWorld(Vector2Int dir) => new Vector3(dir.x, -dir.y, 0f);
@@ -803,7 +873,6 @@ public class PlayerController : MonoBehaviour
         int n = _carried.Count;
         if (n > 0)
         {
-            bool fullCarriage = n >= _data.holdItemCount;
             Vector3 startWorld = _board.CellToWorld(GridPos);
             for (int i = 0; i < _carried.Count; i++)
                 _carried[i].DepositAndDestroy(startWorld + Vector3.down * 0.1f, 0.2f);
@@ -811,7 +880,7 @@ public class PlayerController : MonoBehaviour
             _carried.Clear();
             int score = n * (1 + Mathf.Max(0, _data.foodCollectAmount));
             int progress = n;
-            if (fullCarriage && _data.fullRewardBonus > 0)
+            if (_data.fullRewardBonus > 0)
             {
                 score += _data.fullRewardBonus;
                 progress += _data.fullRewardBonus;
@@ -855,6 +924,7 @@ public class PlayerController : MonoBehaviour
     void BumpEnemy(Vector2Int enemyCell, EnemyItem enemy)
     {
         IsBusy = true;
+        ClearActiveMove();
         Vector3 origin = transform.position;
         Vector3 bump = _board.CellToWorld(enemyCell);
         int damage = Mathf.Max(1, _data.playerHitDamage);
@@ -883,6 +953,7 @@ public class PlayerController : MonoBehaviour
     void JumpAttackEnemy(Vector2Int enemyCell, EnemyItem enemy)
     {
         IsBusy = true;
+        ClearActiveMove();
         Vector3 origin = transform.position;
         Vector3 bump = _board.CellToWorld(enemyCell);
         Vector2Int fromCell = GridPos;
@@ -905,14 +976,18 @@ public class PlayerController : MonoBehaviour
         Vector2Int enemyCell = enemy.GridPos;
         enemy.TakeHit(fromCell, damage);
 
-        if (_data != null && _data.attackAttract)
+        if (_data != null && _data.attackAttractCount > 0)
             TryAttractAdjacentFood(enemyCell);
     }
 
-    /// <summary>Pull one food adjacent to the hit enemy into the player's hands, if any.</summary>
+    /// <summary>Pull up to attackAttractCount adjacent ore into the player's hands.</summary>
     void TryAttractAdjacentFood(Vector2Int enemyCell)
     {
-        if (!CanCarryMore || _board == null)
+        if (!CanCarryMore || _board == null || _data == null)
+            return;
+
+        int pullCount = _data.attackAttractCount;
+        if (pullCount <= 0)
             return;
 
         _attractFoodBuffer.Clear();
@@ -925,11 +1000,26 @@ public class PlayerController : MonoBehaviour
                 _attractFoodBuffer.Add(food);
         }
 
-        if (_attractFoodBuffer.Count == 0)
+        while (pullCount > 0 && CanCarryMore && _attractFoodBuffer.Count > 0)
+        {
+            int index = Random.Range(0, _attractFoodBuffer.Count);
+            var chosen = _attractFoodBuffer[index];
+            _attractFoodBuffer.RemoveAt(index);
+            ReceiveAttractedFood(chosen);
+            pullCount--;
+        }
+    }
+
+    void ReceiveAttractedFood(FoodItem food)
+    {
+        if (food == null || !CanCarryMore)
             return;
 
-        var chosen = _attractFoodBuffer[Random.Range(0, _attractFoodBuffer.Count)];
-        TryPickup(chosen);
+        int index = _carried.Count;
+        food.BeginAttractCarry(_carryRoot, index, _data);
+        _carried.Add(food);
+        RestackCarryVisuals();
+        _game.NotifyCarryChanged();
     }
 
     void OnDestroy()
