@@ -5,7 +5,7 @@
 			<value>sx_ui_perkUnlock</value>
 		</property>
 		<property name="outputFormat">
-			<value>0</value>
+			<value>1</value>
 		</property>
 		<relationship name="folder">
 			<destination>{4af7de73-786b-4c81-86a8-79d6eff467bb}</destination>
@@ -90,7 +90,7 @@
 	<object class="MixerBusPanner" id="{194c5e8f-9366-4d8d-8861-4217b6db5928}" />
 	<object class="MultiSound" id="{f157bba2-5c68-4b80-a022-bc0183a9cd0b}">
 		<property name="length">
-			<value>0.074999999999999997</value>
+			<value>0.74807291666666664</value>
 		</property>
 		<relationship name="modulators">
 			<destination>{372194f1-94df-471d-940b-924d9861fdaf}</destination>
@@ -98,10 +98,13 @@
 		<relationship name="fadeOutCurve">
 			<destination>{e0604f30-3091-48d0-b7ab-085ac493e940}</destination>
 		</relationship>
+		<relationship name="sounds">
+			<destination>{aa9c1c2b-12e7-4290-a06b-75ad08fdf778}</destination>
+		</relationship>
 	</object>
 	<object class="EventMixerGroup" id="{b790653c-acb0-4e53-9826-8175c08dff47}">
 		<property name="volume">
-			<value>-18</value>
+			<value>-3</value>
 		</property>
 		<property name="name">
 			<value>Audio 1</value>
@@ -139,6 +142,11 @@
 			<destination>{597eca6d-d556-479d-aaaa-3aebd113feb6}</destination>
 		</relationship>
 	</object>
+	<object class="SingleSound" id="{aa9c1c2b-12e7-4290-a06b-75ad08fdf778}">
+		<relationship name="audioFile">
+			<destination>{99129ebc-3ee2-432a-85ff-d5d4085cb214}</destination>
+		</relationship>
+	</object>
 	<object class="MixerBusEffectChain" id="{ae406957-88ec-4582-aec6-59b045dc07b7}">
 		<relationship name="effects">
 			<destination>{ee12e4ee-0f65-4ada-81b3-7719c87bfedc}</destination>
@@ -148,7 +156,7 @@
 	<object class="MixerBusFader" id="{883d5d2b-c33a-49c2-8d38-6d36b468b7f0}" />
 	<object class="AutomationPoint" id="{c45243e7-328b-41f1-94ab-8ed87eb52e1c}">
 		<property name="position">
-			<value>0.051999999999999998</value>
+			<value>0.72507291666666673</value>
 		</property>
 		<property name="value">
 			<value>1</value>
@@ -159,7 +167,7 @@
 	</object>
 	<object class="AutomationPoint" id="{597eca6d-d556-479d-aaaa-3aebd113feb6}">
 		<property name="position">
-			<value>0.074999999999999997</value>
+			<value>0.74807291666666664</value>
 		</property>
 		<property name="value">
 			<value>0</value>

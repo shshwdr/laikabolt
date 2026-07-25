@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{c41baf11-ddcc-45d6-b6d8-63860b036070}">
+		<property name="assetPath">
+			<value>sx_int_stone_pickUp_02.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>96</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>0.19511458333333334</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{5f3b77b9-f4ec-4dde-b134-8632b8df7f3d}</destination>
+		</relationship>
+	</object>
+</objects>
