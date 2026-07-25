@@ -5,7 +5,7 @@
 			<value>sx_npc_ufo_spawn</value>
 		</property>
 		<property name="outputFormat">
-			<value>0</value>
+			<value>1</value>
 		</property>
 		<relationship name="folder">
 			<destination>{c2b5e94c-fec9-462f-a01a-111fbe0d77d4}</destination>
@@ -75,12 +75,15 @@
 		</relationship>
 	</object>
 	<object class="MultiSound" id="{b0b7706b-87b2-4a4a-8711-2e8be11ebab2}">
-		<property name="start">
-			<value>1</value>
-		</property>
 		<property name="length">
+			<value>0.43104166666666666</value>
+		</property>
+		<property name="pitch">
 			<value>5</value>
 		</property>
+		<relationship name="sounds">
+			<destination>{c108413a-0011-4cc5-8fa5-07bc4ac598f6}</destination>
+		</relationship>
 	</object>
 	<object class="MixerBusEffectChain" id="{bb725867-6cca-4cf4-9d82-8017af896a5e}">
 		<relationship name="effects">
@@ -94,6 +97,11 @@
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{7f2410bb-19a6-47bf-b272-c13230f95e11}" />
+	<object class="SingleSound" id="{c108413a-0011-4cc5-8fa5-07bc4ac598f6}">
+		<relationship name="audioFile">
+			<destination>{41f8c9f5-1e74-494b-bddd-e0fe1e91cdfd}</destination>
+		</relationship>
+	</object>
 	<object class="MixerBusFader" id="{4ba6e60f-0166-40cc-b0df-e7962c1466c0}" />
 	<object class="MixerBusFader" id="{08be7a97-533f-4b1c-b8e7-ca8ef6ffa063}" />
 </objects>
