@@ -17,10 +17,11 @@ public class PlayerController : MonoBehaviour
     Transform _carryRoot;
     readonly List<FoodItem> _carried = new List<FoodItem>();
     BossCollectFly _carriedBoss;
-    SpriteRenderer _sr;
+    Player _visual;
     Vector2Int _lastMoveDir;
     int _iceChainDepth;
     bool _suppressIceSlide;
+    bool _isDashing;
 
     // Dash hold input (only used when _data.dash).
     Vector2Int _holdDir;
@@ -38,7 +39,7 @@ public class PlayerController : MonoBehaviour
         new Vector2Int(-1, 1),  new Vector2Int(0, 1),  new Vector2Int(1, 1)
     };
 
-    public void Setup(GridBoard board, GameData data, GameManager game, Vector2Int start, Sprite sprite)
+    public void Setup(GridBoard board, GameData data, GameManager game, Vector2Int start)
     {
         _board = board;
         _data = data;
@@ -46,15 +47,32 @@ public class PlayerController : MonoBehaviour
         GridPos = start;
         transform.position = board.CellToWorld(start);
 
-        _sr = gameObject.AddComponent<SpriteRenderer>();
-        _sr.sprite = sprite;
-        _sr.sortingOrder = 10;
-        GridBoard.FitSprite(_sr, data.cellSize * 0.9f);
+        _visual = GetComponent<Player>();
+        if (_visual == null)
+            _visual = gameObject.AddComponent<Player>();
+        _visual.Init(data.cellSize);
+        RefreshVisual();
 
         var carryGo = new GameObject("CarryRoot");
         _carryRoot = carryGo.transform;
         _carryRoot.SetParent(transform, false);
         _carryRoot.localPosition = Vector3.zero;
+    }
+
+    void RefreshVisual()
+    {
+        if (_visual == null)
+            return;
+
+        Vector2Int dir = _lastMoveDir != Vector2Int.zero ? _lastMoveDir : _holdDir;
+        bool dashVisual = _isDashing || _holdActive;
+        _visual.SetVisual(dir, dashVisual);
+    }
+
+    void SetMoveDir(Vector2Int dir)
+    {
+        _lastMoveDir = dir;
+        RefreshVisual();
     }
 
     public void BindSpecials(SceneSpecialSystem specials)
@@ -94,6 +112,7 @@ public class PlayerController : MonoBehaviour
             _holdTime = 0f;
             _holdActive = true;
             _dashFiredThisHold = false;
+            RefreshVisual();
         }
 
         if (!_holdActive)
@@ -101,15 +120,21 @@ public class PlayerController : MonoBehaviour
 
         if (!IsDirectionHeld(_holdDir))
         {
-            // Only step on release when idle; release mid-tween just cancels the hold.
-            if (!_dashFiredThisHold && !IsBusy)
-            {
-                _iceChainDepth = 0;
-                TryMove(_holdDir);
-            }
-
+            Vector2Int stepDir = _holdDir;
+            bool shouldStep = !_dashFiredThisHold && !IsBusy;
             _holdActive = false;
             _holdTime = 0f;
+            // Only step on release when idle; release mid-tween just cancels the hold.
+            if (shouldStep)
+            {
+                _iceChainDepth = 0;
+                TryMove(stepDir);
+            }
+            else
+            {
+                RefreshVisual();
+            }
+
             return;
         }
 
@@ -165,7 +190,7 @@ public class PlayerController : MonoBehaviour
                 return;
 
             _game.NotifyPlayerActed();
-            _lastMoveDir = dir;
+            SetMoveDir(dir);
             if (jump && TryBeginJumpAttack(landing))
                 return;
             if (jump)
@@ -180,13 +205,13 @@ public class PlayerController : MonoBehaviour
             if (_board.TryGetEnemy(target, out var enemy) && enemy.IsAlive)
             {
                 _game.NotifyPlayerActed();
-                _lastMoveDir = dir;
+                SetMoveDir(dir);
                 BumpEnemy(target, enemy);
                 return;
             }
 
             _game.NotifyPlayerActed();
-            _lastMoveDir = dir;
+            SetMoveDir(dir);
             MoveTo(target);
             return;
         }
@@ -198,7 +223,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         _game.NotifyPlayerActed();
-        _lastMoveDir = dir;
+        SetMoveDir(dir);
         if (TryBeginJumpAttack(jumpLanding))
             return;
 
@@ -222,8 +247,10 @@ public class PlayerController : MonoBehaviour
             return false;
 
         _game.NotifyPlayerActed();
-        _lastMoveDir = dir;
+        SetMoveDir(dir);
         _suppressIceSlide = true;
+        _isDashing = true;
+        RefreshVisual();
 
         // Collect along the dash path (ground food, robot stores, boss) — same as stepping on cells.
         for (int i = 0; i < _dashPath.Count; i++)
@@ -270,6 +297,8 @@ public class PlayerController : MonoBehaviour
         {
             GridPos = end;
             IsBusy = false;
+            _isDashing = false;
+            RefreshVisual();
             AfterArrive();
         });
         return true;
@@ -349,7 +378,7 @@ public class PlayerController : MonoBehaviour
                 && wrapEnemy.IsAlive)
             {
                 _iceChainDepth = 0;
-                _lastMoveDir = dir;
+                SetMoveDir(dir);
                 BumpEnemy(wrapped, wrapEnemy);
                 return;
             }
@@ -358,7 +387,7 @@ public class PlayerController : MonoBehaviour
                 return;
 
             _iceChainDepth++;
-            _lastMoveDir = dir;
+            SetMoveDir(dir);
             if (jump && TryBeginJumpAttack(landing))
                 return;
             if (jump)
@@ -373,13 +402,13 @@ public class PlayerController : MonoBehaviour
             if (_board.TryGetEnemy(target, out var enemy) && enemy.IsAlive)
             {
                 _iceChainDepth = 0;
-                _lastMoveDir = dir;
+                SetMoveDir(dir);
                 BumpEnemy(target, enemy);
                 return;
             }
 
             _iceChainDepth++;
-            _lastMoveDir = dir;
+            SetMoveDir(dir);
             MoveTo(target, IceSlideDurationScale);
             return;
         }
@@ -391,7 +420,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         _iceChainDepth++;
-        _lastMoveDir = dir;
+        SetMoveDir(dir);
         if (TryBeginJumpAttack(jumpLanding))
             return;
 

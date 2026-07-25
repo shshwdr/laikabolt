@@ -41,9 +41,8 @@ public class GridBoard : MonoBehaviour
 
     void BuildTiles()
     {
-        Sprite tile = Data.tileSprite != null
-            ? Data.tileSprite
-            : SpriteUtil.WhiteSprite();
+        var tilePrefab = PrefabUtil.Load("prefab/tile");
+        var emptyTilePrefab = PrefabUtil.Load("prefab/emptyTile");
 
         for (int row = 0; row < Map.Height; row++)
         {
@@ -51,33 +50,62 @@ public class GridBoard : MonoBehaviour
             {
                 var cellType = Map.GetCell(col, row);
                 var cell = new Vector2Int(col, row);
-                var go = new GameObject($"Tile_{col}_{row}");
-                go.transform.SetParent(_tileRoot, false);
+                // Walkable / Start use tile; Blocked uses emptyTile.
+                var prefab = cellType == MapCellType.Blocked
+                    ? (emptyTilePrefab != null ? emptyTilePrefab : tilePrefab)
+                    : tilePrefab;
+
+                GameObject go;
+                if (prefab != null)
+                {
+                    go = Object.Instantiate(prefab, _tileRoot);
+                    go.name = $"Tile_{col}_{row}";
+                }
+                else
+                {
+                    go = new GameObject($"Tile_{col}_{row}");
+                    go.transform.SetParent(_tileRoot, false);
+                }
+
                 go.transform.position = CellToWorld(col, row);
 
-                var sr = go.AddComponent<SpriteRenderer>();
-                sr.sprite = tile;
+                var sr = SpriteUtil.ResolveRenderer(go);
+                if (sr.sprite == null)
+                    sr.sprite = Data.tileSprite != null ? Data.tileSprite : SpriteUtil.WhiteSprite();
                 sr.sortingOrder = 0;
                 float s = Data.cellSize * 0.95f;
                 FitSprite(sr, s);
 
-                Color baseColor;
-                switch (cellType)
-                {
-                    case MapCellType.Blocked:
-                        baseColor = new Color(0.25f, 0.25f, 0.28f);
-                        break;
-                    case MapCellType.Start:
-                        baseColor = new Color(0.35f, 0.75f, 0.45f);
-                        break;
-                    default:
-                        baseColor = new Color(0.55f, 0.6f, 0.68f);
-                        break;
-                }
+                Color baseColor = cellType == MapCellType.Blocked
+                    ? new Color(0.25f, 0.25f, 0.28f)
+                    : Color.white;
 
                 sr.color = baseColor;
                 _tiles[cell] = sr;
                 _tileBaseColors[cell] = baseColor;
+            }
+        }
+    }
+
+    public void SpawnStartMarkers()
+    {
+        for (int row = 0; row < Map.Height; row++)
+        {
+            for (int col = 0; col < Map.Width; col++)
+            {
+                if (Map.GetCell(col, row) != MapCellType.Start)
+                    continue;
+
+                var cell = new Vector2Int(col, row);
+                var go = PrefabUtil.Instantiate("prefab/start", _entityRoot, "Start");
+                PrefabUtil.EnsureAnimPlayer(go);
+                go.transform.position = CellToWorld(cell);
+
+                var sr = SpriteUtil.ResolveRenderer(go);
+                if (sr.sprite == null)
+                    sr.sprite = SpriteUtil.WhiteSprite();
+                sr.sortingOrder = 2;
+                MainGameObject.Fit(go, sr, Data.cellSize);
             }
         }
     }

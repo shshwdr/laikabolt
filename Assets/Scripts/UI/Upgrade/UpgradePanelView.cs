@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 public class UpgradePanelView : MonoBehaviour
 {
-    const string UpgradeCellPrefabPath = "prefab/upgradeCell";
     const float DefaultButtonSize = 160f;
     const float SceneButtonSize = 96f;
 
@@ -29,7 +28,7 @@ public class UpgradePanelView : MonoBehaviour
 
     MetaSaveData metaSave;
     Sprite buttonSprite;
-    GameObject upgradeCellPrefab;
+    [SerializeField] GameObject upgradeCellPrefab;
     UpgradeTreePanZoom panZoom;
     bool built;
     System.Action onMetaGoldChanged;
@@ -45,9 +44,7 @@ public class UpgradePanelView : MonoBehaviour
     class UpgradeNodeView
     {
         public string Id;
-        public Button Button;
-        public Image Image;
-        public TMP_Text Label;
+        public UpgradeCell Cell;
     }
 
     public void Setup(
@@ -81,9 +78,8 @@ public class UpgradePanelView : MonoBehaviour
         built = true;
         CSVLoader.Init();
         buttonSprite = SpriteUtil.WhiteSprite();
-        upgradeCellPrefab = Resources.Load<GameObject>(UpgradeCellPrefabPath);
         if (upgradeCellPrefab == null)
-            Debug.LogError($"UpgradePanelView: prefab not found at Resources/{UpgradeCellPrefabPath}.");
+            Debug.LogError($"UpgradePanelView: prefab not found.");
         else
         {
             var prefabRect = upgradeCellPrefab.GetComponent<RectTransform>();
@@ -230,37 +226,33 @@ public class UpgradePanelView : MonoBehaviour
             size = new Vector2(buttonSize, buttonSize);
         SetupCenterRect(buttonRect, position, size);
 
-        var button = buttonGo.GetComponent<Button>();
-        if (button == null)
-            button = buttonGo.GetComponentInChildren<Button>(true);
-
-        Image image = null;
-        if (button != null && button.targetGraphic is Image targetImage)
-            image = targetImage;
-        if (image == null)
-            image = buttonGo.GetComponentInChildren<Image>(true);
-
-        var label = buttonGo.GetComponentInChildren<TMP_Text>(true);
-        if (label != null)
+        var cell = buttonGo.GetComponent<UpgradeCell>();
+        if (cell == null)
         {
-            if (TMP_Settings.defaultFontAsset != null)
-                label.font = TMP_Settings.defaultFontAsset;
-            label.text = BuildUpgradeLabel(info);
+            Debug.LogError(
+                $"UpgradePanelView: upgradeCell prefab is missing UpgradeCell. Attach it on the prefab root and wire Button / Icon / Label.");
+            Destroy(buttonGo);
+            return;
         }
 
-        if (button != null)
+        if (cell.Label != null)
+        {
+            if (TMP_Settings.defaultFontAsset != null)
+                cell.Label.font = TMP_Settings.defaultFontAsset;
+            cell.Label.text = BuildUpgradeLabel(info);
+        }
+
+        if (cell.Button != null)
         {
             string capturedId = identifier;
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(() => OnUpgradeClicked(capturedId));
+            cell.Button.onClick.RemoveAllListeners();
+            cell.Button.onClick.AddListener(() => OnUpgradeClicked(capturedId));
         }
 
         nodeViews[identifier] = new UpgradeNodeView
         {
             Id = identifier,
-            Button = button,
-            Image = image,
-            Label = label
+            Cell = cell
         };
     }
 
@@ -373,7 +365,7 @@ public class UpgradePanelView : MonoBehaviour
         playerMarker.pivot = new Vector2(0.5f, 0.5f);
 
         playerMarkerImage = go.AddComponent<Image>();
-        var playerSprite = Resources.Load<Sprite>("render/player");
+        var playerSprite = Resources.Load<Sprite>("player/down");
         playerMarkerImage.sprite = playerSprite != null ? playerSprite : buttonSprite;
         playerMarkerImage.preserveAspect = true;
         playerMarkerImage.raycastTarget = false;
@@ -525,35 +517,35 @@ public class UpgradePanelView : MonoBehaviour
     void RefreshUpgradeButton(UpgradeNodeView node)
     {
         var info = CSVLoader.Get(node.Id);
-        if (info == null)
+        if (info == null || node.Cell == null)
             return;
 
         bool canBuy = MetaSaveService.CanPurchase(metaSave, node.Id);
         bool maxed = metaSave.GetLevel(node.Id) >= info.maxLevel;
         bool locked = MetaSaveService.IsLocked(metaSave, info);
 
-        if (node.Label != null)
+        if (node.Cell.Label != null)
         {
-            node.Label.text = BuildUpgradeLabel(info);
-            node.Label.color = maxed
+            node.Cell.Label.text = BuildUpgradeLabel(info);
+            node.Cell.Label.color = maxed
                 ? new Color(0.45f, 0.45f, 0.48f, 1f)
                 : Color.white;
         }
 
-        if (node.Button != null)
-            node.Button.interactable = canBuy;
+        if (node.Cell.Button != null)
+            node.Cell.Button.interactable = canBuy;
 
-        if (node.Image == null)
+        if (node.Cell.Icon == null)
             return;
 
         if (maxed)
-            node.Image.color = new Color(0.12f, 0.12f, 0.14f, 1f);
+            node.Cell.Icon.color = new Color(0.12f, 0.12f, 0.14f, 1f);
         else if (locked)
-            node.Image.color = new Color(0.22f, 0.22f, 0.22f, 1f);
+            node.Cell.Icon.color = new Color(0.22f, 0.22f, 0.22f, 1f);
         else if (canBuy)
-            node.Image.color = new Color(0.25f, 0.45f, 0.8f, 1f);
+            node.Cell.Icon.color = new Color(0.25f, 0.45f, 0.8f, 1f);
         else
-            node.Image.color = new Color(0.45f, 0.28f, 0.28f, 1f);
+            node.Cell.Icon.color = new Color(0.45f, 0.28f, 0.28f, 1f);
     }
 
     string BuildUpgradeLabel(UpgradeInfo info)

@@ -410,43 +410,25 @@ public class GameManager : MonoBehaviour
 
         _board.Init(mapData, _runtimeData);
 
-
-
-        var playerSprite = SpriteUtil.LoadOr(gameData.playerSprite, "render/player");
-
-        var foodSprite = SpriteUtil.LoadOr(gameData.foodSprite, "render/food");
-
-        var monsterSprite = SpriteUtil.LoadOr(gameData.monsterSprite, "render/monster");
-
-        var robotSprite = SpriteUtil.LoadOr(gameData.robotSprite, "render/robot");
+        _board.SpawnStartMarkers();
 
 
 
-        if (playerSprite == null || foodSprite == null || monsterSprite == null)
+        var playerGo = PrefabUtil.Instantiate("prefab/player", _board.EntityRoot, "Player");
 
-            Debug.LogWarning("[GameManager] Some sprites failed to load from Resources/render.");
+        _player = playerGo.GetComponent<PlayerController>();
 
+        if (_player == null)
 
+            _player = playerGo.AddComponent<PlayerController>();
 
-        var playerGo = new GameObject("Player");
-
-        playerGo.transform.SetParent(_board.EntityRoot, false);
-
-        _player = playerGo.AddComponent<PlayerController>();
-
-        _player.Setup(_board, _runtimeData, this, start, playerSprite != null ? playerSprite : SpriteUtil.WhiteSprite());
+        _player.Setup(_board, _runtimeData, this, start);
 
 
 
         _spawn = gameObject.AddComponent<SpawnSystem>();
 
-        _spawn.Init(_board, _runtimeData, _player, this,
-
-            foodSprite != null ? foodSprite : SpriteUtil.WhiteSprite(),
-
-            monsterSprite != null ? monsterSprite : SpriteUtil.WhiteSprite(),
-
-            robotSprite != null ? robotSprite : SpriteUtil.WhiteSprite());
+        _spawn.Init(_board, _runtimeData, _player, this);
 
 
 
@@ -806,21 +788,17 @@ public class GameManager : MonoBehaviour
 
 
 
-        var sprite = Resources.Load<Sprite>("sceneItems/ufo");
+        var go = PrefabUtil.Instantiate("prefab/boss", _board.EntityRoot, "BossCollectFly");
 
-        if (sprite == null)
+        PrefabUtil.EnsureAnimPlayer(go);
 
-            sprite = SpriteUtil.WhiteSprite();
+        _boss = go.GetComponent<BossCollectFly>();
 
+        if (_boss == null)
 
+            _boss = go.AddComponent<BossCollectFly>();
 
-        var go = new GameObject("BossCollectFly");
-
-        go.transform.SetParent(_board.EntityRoot, false);
-
-        _boss = go.AddComponent<BossCollectFly>();
-
-        _boss.Setup(_board, _runtimeData, this, _player, cell, sprite, _bossHitsNeeded, _bossMinDistance);
+        _boss.Setup(_board, _runtimeData, this, _player, cell, _bossHitsNeeded, _bossMinDistance);
 
     }
 

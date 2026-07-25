@@ -3,6 +3,10 @@ using UnityEngine;
 
 public class SpawnSystem : MonoBehaviour
 {
+    const string FoodPrefabPath = "prefab/food";
+    const string MonsterPrefabPath = "prefab/monster";
+    const string RobotPrefabPath = "prefab/robot";
+
     static readonly Vector2Int[] Cardinals =
     {
         new Vector2Int(0, -1),
@@ -22,9 +26,6 @@ public class SpawnSystem : MonoBehaviour
     GameData _data;
     PlayerController _player;
     GameManager _game;
-    Sprite _foodSprite;
-    Sprite _monsterSprite;
-    Sprite _robotSprite;
     float _foodTimer;
     float _enemyTimer;
     readonly List<Vector2Int> _candidates = new List<Vector2Int>(32);
@@ -34,18 +35,12 @@ public class SpawnSystem : MonoBehaviour
         GridBoard board,
         GameData data,
         PlayerController player,
-        GameManager game,
-        Sprite food,
-        Sprite monster,
-        Sprite robot)
+        GameManager game)
     {
         _board = board;
         _data = data;
         _player = player;
         _game = game;
-        _foodSprite = food;
-        _monsterSprite = monster;
-        _robotSprite = robot;
     }
 
     public void SpawnInitial()
@@ -104,10 +99,12 @@ public class SpawnSystem : MonoBehaviour
     void TrySpawnEnemy()
     {
         if (!TryPickCell(out var cell)) return;
-        var go = new GameObject("Enemy");
-        go.transform.SetParent(_board.EntityRoot, false);
-        var enemy = go.AddComponent<EnemyItem>();
-        enemy.Setup(_board, _data, cell, _monsterSprite, DropFoodFromEnemy);
+        var go = PrefabUtil.Instantiate(MonsterPrefabPath, _board.EntityRoot, "Enemy");
+        PrefabUtil.EnsureAnimPlayer(go);
+        var enemy = go.GetComponent<EnemyItem>();
+        if (enemy == null)
+            enemy = go.AddComponent<EnemyItem>();
+        enemy.Setup(_board, _data, cell, DropFoodFromEnemy);
     }
 
     void DropFoodFromEnemy(Vector2Int origin)
@@ -148,19 +145,23 @@ public class SpawnSystem : MonoBehaviour
 
     void CreateFood(Vector2Int cell)
     {
-        var go = new GameObject("Food");
-        go.transform.SetParent(_board.EntityRoot, false);
-        var food = go.AddComponent<FoodItem>();
-        food.Setup(_board, cell, _foodSprite, _data.cellSize);
+        var go = PrefabUtil.Instantiate(FoodPrefabPath, _board.EntityRoot, "Food");
+        PrefabUtil.EnsureAnimPlayer(go);
+        var food = go.GetComponent<FoodItem>();
+        if (food == null)
+            food = go.AddComponent<FoodItem>();
+        food.Setup(_board, cell, _data.cellSize);
     }
 
     /// <summary>Creates a food that goes straight into the player's hand (no board cell).</summary>
     public FoodItem CreateCarryOnlyFood()
     {
-        var go = new GameObject("Food");
-        go.transform.SetParent(_board.EntityRoot, false);
-        var food = go.AddComponent<FoodItem>();
-        food.SetupUnregistered(_foodSprite, _data.cellSize);
+        var go = PrefabUtil.Instantiate(FoodPrefabPath, _board.EntityRoot, "Food");
+        PrefabUtil.EnsureAnimPlayer(go);
+        var food = go.GetComponent<FoodItem>();
+        if (food == null)
+            food = go.AddComponent<FoodItem>();
+        food.SetupUnregistered(_data.cellSize);
         return food;
     }
 
@@ -174,11 +175,12 @@ public class SpawnSystem : MonoBehaviour
         }
 
         var cell = _candidates[Random.Range(0, _candidates.Count)];
-        var go = new GameObject("CollectRobot");
-        go.transform.SetParent(_board.EntityRoot, false);
-        var robot = go.AddComponent<CollectRobot>();
-        robot.Setup(_board, _data, _game, cell,
-            _robotSprite != null ? _robotSprite : SpriteUtil.WhiteSprite());
+        var go = PrefabUtil.Instantiate(RobotPrefabPath, _board.EntityRoot, "CollectRobot");
+        PrefabUtil.EnsureAnimPlayer(go);
+        var robot = go.GetComponent<CollectRobot>();
+        if (robot == null)
+            robot = go.AddComponent<CollectRobot>();
+        robot.Setup(_board, _data, _game, cell);
     }
 
     void CollectRobotCandidates(List<Vector2Int> buffer)

@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// Scene special terrain from scene.csv <c>special</c>:
 /// pointDamage / lineDamage / iceSkate / pointDamage2.
-/// Sprites load from Resources/sceneItems.
+/// Point damage visuals load from Resources/prefab; other sprites from sceneItems.
 /// </summary>
 public class SceneSpecialSystem : MonoBehaviour
 {
@@ -52,8 +52,8 @@ public class SceneSpecialSystem : MonoBehaviour
     PlayerController _player;
     Transform _overlayRoot;
     ParsedSpecial _special;
-    Sprite _pointPre;
-    Sprite _pointDamage;
+    GameObject _pointPrePrefab;
+    GameObject _pointDamagePrefab;
     Sprite _linePre;
     Sprite _lineDamage;
     Sprite _iceSkate;
@@ -84,8 +84,8 @@ public class SceneSpecialSystem : MonoBehaviour
         if (!HasSpecial)
             return;
 
-        _pointPre = LoadSprite("pointDamagePre");
-        _pointDamage = LoadSprite("pointDamageDamage");
+        _pointPrePrefab = PrefabUtil.Load("prefab/pointDamagePre");
+        _pointDamagePrefab = PrefabUtil.Load("prefab/pointDamageDamage");
         _linePre = LoadSprite("lineDamagePre");
         _lineDamage = LoadSprite("lineDamageDamage");
         _iceSkate = LoadSprite("iceSkate");
@@ -474,14 +474,19 @@ public class SceneSpecialSystem : MonoBehaviour
     {
         ClearVisuals(h);
 
+        if (h.Kind == SpecialKind.PointDamage || h.Kind == SpecialKind.PointDamage2)
+        {
+            var prefab = h.Phase == HazardPhase.Warning ? _pointPrePrefab : _pointDamagePrefab;
+            string fallback = h.Phase == HazardPhase.Warning ? "pointDamagePre" : "pointDamageDamage";
+            for (int i = 0; i < h.OccupiedCells.Count; i++)
+                h.Visuals.Add(CreateOverlayFromPrefab(h.OccupiedCells[i], prefab, fallback));
+            return;
+        }
+
         Sprite sprite;
         Color tint = Color.white;
         switch (h.Kind)
         {
-            case SpecialKind.PointDamage:
-            case SpecialKind.PointDamage2:
-                sprite = h.Phase == HazardPhase.Warning ? _pointPre : _pointDamage;
-                break;
             case SpecialKind.LineDamage:
                 sprite = h.Phase == HazardPhase.Warning ? _linePre : _lineDamage;
                 break;
@@ -495,6 +500,31 @@ public class SceneSpecialSystem : MonoBehaviour
 
         for (int i = 0; i < h.OccupiedCells.Count; i++)
             h.Visuals.Add(CreateOverlay(h.OccupiedCells[i], sprite, tint));
+    }
+
+    GameObject CreateOverlayFromPrefab(Vector2Int cell, GameObject prefab, string fallbackName)
+    {
+        GameObject go;
+        if (prefab != null)
+        {
+            go = Instantiate(prefab, _overlayRoot);
+            go.name = fallbackName + "_" + cell.x + "_" + cell.y;
+        }
+        else
+        {
+            go = new GameObject(fallbackName + "_" + cell.x + "_" + cell.y);
+            go.transform.SetParent(_overlayRoot, false);
+        }
+
+        PrefabUtil.EnsureAnimPlayer(go);
+        go.transform.position = _board.CellToWorld(cell);
+
+        var sr = SpriteUtil.ResolveRenderer(go);
+        if (sr.sprite == null)
+            sr.sprite = SpriteUtil.WhiteSprite();
+        sr.sortingOrder = 3;
+        MainGameObject.Fit(go, sr, _data.cellSize);
+        return go;
     }
 
     GameObject CreateOverlay(Vector2Int cell, Sprite sprite, Color tint)

@@ -25,7 +25,7 @@ public class CollectRobot : MonoBehaviour
     bool _grabbing;
     bool _working;
 
-    public void Setup(GridBoard board, GameData data, GameManager game, Vector2Int cell, Sprite sprite)
+    public void Setup(GridBoard board, GameData data, GameManager game, Vector2Int cell)
     {
         _board = board;
         _data = data;
@@ -33,10 +33,11 @@ public class CollectRobot : MonoBehaviour
         GridPos = cell;
         transform.position = board.CellToWorld(cell);
 
-        var sr = gameObject.AddComponent<SpriteRenderer>();
-        sr.sprite = sprite;
+        var sr = SpriteUtil.ResolveRenderer(gameObject);
+        if (sr.sprite == null)
+            sr.sprite = SpriteUtil.WhiteSprite();
         sr.sortingOrder = 7;
-        GridBoard.FitSprite(sr, data.cellSize * 0.8f);
+        MainGameObject.Fit(gameObject, sr, data.cellSize);
 
         var carryGo = new GameObject("CarryRoot");
         _carryRoot = carryGo.transform;

@@ -10,29 +10,33 @@ public class FoodItem : MonoBehaviour
     GridBoard _board;
     bool _carried;
 
-    public void Setup(GridBoard board, Vector2Int cell, Sprite sprite, float cellSize)
+    public void Setup(GridBoard board, Vector2Int cell, float cellSize)
     {
         _board = board;
         GridPos = cell;
 
-        _sr = gameObject.AddComponent<SpriteRenderer>();
-        _sr.sprite = sprite;
-        GridBoard.FitSprite(_sr, cellSize * 0.7f);
+        BindRenderer(cellSize);
 
         int stackIndex = board.RegisterFood(cell, this);
         ApplyGroundStack(stackIndex);
     }
 
     /// <summary>Food that never sat on the board (e.g. lastMinute duplicate).</summary>
-    public void SetupUnregistered(Sprite sprite, float cellSize)
+    public void SetupUnregistered(float cellSize)
     {
         _board = null;
         _carried = false;
         GridPos = default;
 
-        _sr = gameObject.AddComponent<SpriteRenderer>();
-        _sr.sprite = sprite;
-        GridBoard.FitSprite(_sr, cellSize * 0.7f);
+        BindRenderer(cellSize);
+    }
+
+    void BindRenderer(float cellSize)
+    {
+        _sr = SpriteUtil.ResolveRenderer(gameObject);
+        if (_sr.sprite == null)
+            _sr.sprite = SpriteUtil.WhiteSprite();
+        MainGameObject.Fit(gameObject, _sr, cellSize);
     }
 
     public void ApplyGroundStack(int stackIndex)

@@ -17,7 +17,6 @@ public class EnemyItem : MonoBehaviour
         GridBoard board,
         GameData data,
         Vector2Int cell,
-        Sprite sprite,
         System.Action<Vector2Int> onKilled = null)
     {
         _board = board;
@@ -27,10 +26,11 @@ public class EnemyItem : MonoBehaviour
         HitsLeft = data.enemyHitsToKill;
         transform.position = board.CellToWorld(cell);
 
-        _sr = gameObject.AddComponent<SpriteRenderer>();
-        _sr.sprite = sprite;
+        _sr = SpriteUtil.ResolveRenderer(gameObject);
+        if (_sr.sprite == null)
+            _sr.sprite = SpriteUtil.WhiteSprite();
         _sr.sortingOrder = 8;
-        GridBoard.FitSprite(_sr, data.cellSize * 0.85f);
+        MainGameObject.Fit(gameObject, _sr, data.cellSize);
 
         board.RegisterEnemy(cell, this);
     }

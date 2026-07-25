@@ -31,7 +31,6 @@ public class BossCollectFly : MonoBehaviour
         GameManager game,
         PlayerController player,
         Vector2Int cell,
-        Sprite sprite,
         int hitsNeeded,
         int minDistance)
     {
@@ -46,10 +45,11 @@ public class BossCollectFly : MonoBehaviour
         Vector3 end = board.CellToWorld(cell);
         transform.position = end + Vector3.up * (data.cellSize * DropHeightCells);
 
-        _sr = gameObject.AddComponent<SpriteRenderer>();
-        _sr.sprite = sprite != null ? sprite : SpriteUtil.WhiteSprite();
+        _sr = SpriteUtil.ResolveRenderer(gameObject);
+        if (_sr.sprite == null)
+            _sr.sprite = SpriteUtil.WhiteSprite();
         _sr.sortingOrder = 9;
-        GridBoard.FitSprite(_sr, data.cellSize * 0.9f);
+        MainGameObject.Fit(gameObject, _sr, data.cellSize);
 
         board.RegisterBoss(this);
 
