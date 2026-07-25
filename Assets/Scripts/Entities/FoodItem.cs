@@ -1,5 +1,6 @@
 using DG.Tweening;
 using UnityEngine;
+using FMODUnity;
 
 public class FoodItem : MonoBehaviour
 {
@@ -59,6 +60,8 @@ public class FoodItem : MonoBehaviour
         if (_board != null)
             _board.UnregisterFood(this);
 
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Interactables/sx_int_stone_pickUp");
+
         transform.SetParent(carryRoot, true);
         transform.DOKill();
 
@@ -80,6 +83,8 @@ public class FoodItem : MonoBehaviour
         IsAttractFlying = true;
         if (_board != null)
             _board.UnregisterFood(this);
+
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Interactables/sx_int_stone_pickUp");
 
         transform.SetParent(carryRoot, true);
         transform.DOKill();
@@ -110,6 +115,8 @@ public class FoodItem : MonoBehaviour
         _carried = true;
         if (_board != null)
             _board.UnregisterFood(this);
+
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/NPC/sx_npc_robot_pickUp");
 
         transform.SetParent(carryRoot, true);
         transform.DOKill();
@@ -152,6 +159,9 @@ public class FoodItem : MonoBehaviour
     {
         transform.SetParent(null, true);
         transform.DOKill();
+
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Interactables/sx_int_stone_dropOff");
+
         var seq = DOTween.Sequence();
         seq.Join(transform.DOMove(target, duration).SetEase(Ease.InQuad));
         seq.Join(transform.DOScale(Vector3.zero, duration).SetEase(Ease.InQuad));

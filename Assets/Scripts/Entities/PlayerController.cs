@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
+using FMODUnity;
 
 public class PlayerController : MonoBehaviour
 {
@@ -78,6 +79,8 @@ public class PlayerController : MonoBehaviour
     {
         _lastMoveDir = dir;
         RefreshVisual();
+
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_move");
     }
 
     public void BindSpecials(SceneSpecialSystem specials)
@@ -169,6 +172,7 @@ public class PlayerController : MonoBehaviour
             return new Vector2Int(-1, 0);
         if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
             return new Vector2Int(1, 0);
+      
         return Vector2Int.zero;
     }
 
@@ -193,9 +197,16 @@ public class PlayerController : MonoBehaviour
         if (outOfBounds)
         {
             if (!_data.passBorder)
+            {
+                FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_moveBlocked");
                 return;
+            }
+               
             if (!TryResolveWrappedMove(dir, out var landing, out bool jump))
+            {
+                FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_moveBlocked");
                 return;
+            }
 
             _game.NotifyPlayerActed();
             SetMoveDir(dir);
@@ -225,10 +236,12 @@ public class PlayerController : MonoBehaviour
         }
 
         if (_board.Map.GetCell(target.x, target.y) != MapCellType.Blocked)
-            return;
+            FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_moveBlocked");
+        return;
 
         if (!TryFindJumpLanding(dir, out var jumpLanding, out bool jumpWrapped))
-            return;
+            FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_moveBlocked");
+        return;
 
         _game.NotifyPlayerActed();
         SetMoveDir(dir);
@@ -604,6 +617,7 @@ public class PlayerController : MonoBehaviour
     {
         IsBusy = true;
         BeginActiveMove(target);
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_jump");
         Vector3 world = _board.CellToWorld(target);
         float duration = Mathf.Max(0.01f, _data.jumpDuration * durationScale);
         transform.DOKill();
@@ -646,6 +660,7 @@ public class PlayerController : MonoBehaviour
     {
         IsBusy = true;
         BeginActiveMove(target);
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_jump");
         Vector3 worldDir = DirToWorld(dir);
         Vector3 exit = transform.position + worldDir * (_data.cellSize * 0.55f);
         Vector3 end = _board.CellToWorld(target);
@@ -954,6 +969,7 @@ public class PlayerController : MonoBehaviour
     {
         IsBusy = true;
         ClearActiveMove();
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_jump");
         Vector3 origin = transform.position;
         Vector3 bump = _board.CellToWorld(enemyCell);
         Vector2Int fromCell = GridPos;

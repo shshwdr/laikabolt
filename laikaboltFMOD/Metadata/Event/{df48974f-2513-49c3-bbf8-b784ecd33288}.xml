@@ -157,9 +157,6 @@
 		<property name="length">
 			<value>41.142857142857146</value>
 		</property>
-		<property name="volume">
-			<value>1.5</value>
-		</property>
 		<relationship name="audioFile">
 			<destination>{387f56f0-3ec7-4e76-b506-9d69db176fff}</destination>
 		</relationship>
@@ -245,7 +242,7 @@
 			<value>27.428571428571423</value>
 		</property>
 		<property name="quantizationInterval">
-			<value>1</value>
+			<value>2</value>
 		</property>
 		<relationship name="timeline">
 			<destination>{f3de0f13-3283-436f-89e0-5a4357268f34}</destination>
@@ -299,7 +296,7 @@
 			<value>41.142857142857139</value>
 		</property>
 		<property name="quantizationInterval">
-			<value>1</value>
+			<value>2</value>
 		</property>
 		<relationship name="timeline">
 			<destination>{f3de0f13-3283-436f-89e0-5a4357268f34}</destination>

@@ -15,10 +15,10 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639205668109566277
+  lastModified: 639206042290042957
   FileSizes:
   - Name: Desktop
-    Value: 1852
+    Value: 1858
   Exists: 1
 --- !u!114 &-6564238588479961289
 MonoBehaviour:
@@ -73,7 +73,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 200
 --- !u!114 &-4651756832321925464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,10 +89,10 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639205668109563742
+  lastModified: 639206042290012719
   FileSizes:
   - Name: Desktop
-    Value: 1009632
+    Value: 1093056
   Exists: 1
 --- !u!114 &-4612136185173350314
 MonoBehaviour:
@@ -120,7 +120,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 622
 --- !u!114 &-4498873847655703161
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -147,7 +147,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 170
 --- !u!114 &-3614567679089331750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -174,7 +174,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 390
 --- !u!114 &-2483601676386006242
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -255,7 +255,34 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 748
+--- !u!114 &-122361262014043023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/NPC/sx_npc_ufo_move
+  m_EditorClassIdentifier: 
+  Path: event:/SFX/NPC/sx_npc_ufo_move
+  Guid:
+    Data1: -494772102
+    Data2: 1337675601
+    Data3: 1040168633
+    Data4: 519488542
+  Banks:
+  - {fileID: -4651756832321925464}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 550
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -279,7 +306,6 @@ MonoBehaviour:
   - {fileID: 1494353872028577598}
   - {fileID: 4657429394913789446}
   - {fileID: 2787631258992467054}
-  - {fileID: 6078135536162443317}
   - {fileID: -1772928997693742431}
   - {fileID: 2961489215708530671}
   - {fileID: -4498873847655703161}
@@ -293,16 +319,57 @@ MonoBehaviour:
   - {fileID: 2669440942959015527}
   - {fileID: 9207566750453831248}
   - {fileID: -2483601676386006242}
+  - {fileID: -122361262014043023}
   EditorParameters: []
   MasterBanks:
   - {fileID: -4651756832321925464}
   StringsBanks:
   - {fileID: -8696051253084561046}
   cacheVersion: 131860
-  cacheTime: 639205668109566277
+  cacheTime: 639206042290042957
   SerializableEventsDict:
   - key: event:/Music/mus_gameplay
     index: 0
+  - key: event:/SFX/Interactables/sx_int_stone_pickUp
+    index: 1
+  - key: event:/SFX/Player/sx_player_moveBlocked
+    index: 2
+  - key: event:/SFX/UX/sx_ui_perkUnlock
+    index: 3
+  - key: event:/SFX/Ambience/sx_amb_shop_lp
+    index: 4
+  - key: event:/SFX/UX/sx_ui_gameStart
+    index: 5
+  - key: event:/SFX/Environment/sx_env_storm_damage
+    index: 6
+  - key: event:/SFX/UX/sx_ui_planetSelect
+    index: 7
+  - key: event:/SFX/UX/sx_ui_gameEnd
+    index: 8
+  - key: event:/SFX/Player/sx_player_jump
+    index: 9
+  - key: event:/SFX/Environment/sx_env_storm_build
+    index: 10
+  - key: event:/SFX/Environment/sx_env_storm
+    index: 11
+  - key: event:/SFX/UX/sx_ui_select
+    index: 12
+  - key: event:/SFX/NPC/sx_npc_ufo_spawn
+    index: 13
+  - key: event:/SFX/NPC/sx_npc_enemy_death
+    index: 14
+  - key: event:/SFX/NPC/sx_npc_enemy_damage
+    index: 15
+  - key: event:/SFX/Player/sx_player_move
+    index: 16
+  - key: event:/SFX/NPC/sx_npc_robot_pickUp
+    index: 17
+  - key: event:/SFX/Interactables/sx_int_stone_dropOff
+    index: 18
+  - key: event:/SFX/NPC/sx_npc_enemy_spawn
+    index: 19
+  - key: event:/SFX/NPC/sx_npc_ufo_move
+    index: 20
 --- !u!114 &1314768490896853844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -384,7 +451,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 6000
+  Length: 431
 --- !u!114 &2588434212028866286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -601,33 +668,6 @@ MonoBehaviour:
   - Regular
   - Boss
   Exists: 1
---- !u!114 &6078135536162443317
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
-  m_Name: event:/SFX/UX/sx_ui_nodeUnlock
-  m_EditorClassIdentifier: 
-  Path: event:/SFX/UX/sx_ui_nodeUnlock
-  Guid:
-    Data1: -429525663
-    Data2: 1200973943
-    Data3: -954496079
-    Data4: -583328071
-  Banks:
-  - {fileID: -4651756832321925464}
-  IsStream: 0
-  Is3D: 0
-  IsOneShot: 1
-  Parameters: []
-  MinDistance: 1
-  MaxDistance: 20
-  Length: 75
 --- !u!114 &6101379638130602680
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -681,4 +721,4 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 750

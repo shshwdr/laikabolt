@@ -2495,7 +2495,6 @@ GameObject:
   m_Component:
   - component: {fileID: 800000002}
   - component: {fileID: 800000003}
-  - component: {fileID: 800000004}
   m_Layer: 0
   m_Name: Game
   m_TagString: Untagged
@@ -2539,26 +2538,6 @@ MonoBehaviour:
   exploreView: {fileID: 0}
   gameOverView: {fileID: 801545945}
   tutorialManager: {fileID: 0}
---- !u!114 &800000004
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 800000001}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7c8e4a2b1f9d4e6a8b0c3d5e7f9a1b2c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  gameplayMusicEvent:
-    Guid:
-      Data1: -548890801
-      Data2: 1237525779
-      Data3: -2068318021
-      Data4: -2009934868
-    Path: event:/Music/mus_gameplay
-  gameplayMusicPath: event:/Music/mus_gameplay
 --- !u!1 &801545943
 GameObject:
   m_ObjectHideFlags: 0
@@ -3643,6 +3622,57 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1198905134}
   m_CullTransparentMesh: 1
+--- !u!1 &1255589525
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1255589527}
+  - component: {fileID: 1255589526}
+  m_Layer: 0
+  m_Name: MusicManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1255589526
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1255589525}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ddc30cb6ced28640a975e2051d96551, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  musicEvent:
+    Guid:
+      Data1: -548890801
+      Data2: 1237525779
+      Data3: -2068318021
+      Data4: -2009934868
+    Path: event:/Music/mus_gameplay
+--- !u!4 &1255589527
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1255589525}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1317097314
 GameObject:
   m_ObjectHideFlags: 0
@@ -5788,3 +5818,4 @@ SceneRoots:
   - {fileID: 184485948}
   - {fileID: 1935417975621880243}
   - {fileID: 1042606552}
+  - {fileID: 1255589527}

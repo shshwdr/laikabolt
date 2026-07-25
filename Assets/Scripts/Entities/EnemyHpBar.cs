@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using FMODUnity;
 
 /// <summary>
 /// World-space HP progress bar for monsters. Assign ProgressBar fill Image on the prefab,

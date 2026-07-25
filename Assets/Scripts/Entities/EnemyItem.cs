@@ -1,5 +1,6 @@
 using DG.Tweening;
 using UnityEngine;
+using FMODUnity;
 
 public class EnemyItem : MonoBehaviour
 {
@@ -54,7 +55,12 @@ public class EnemyItem : MonoBehaviour
         _hpBar?.SetHp(Mathf.Max(0, HitsLeft));
 
         if (HitsLeft > 0)
+        {
+                FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/NPC/sx_npc_enemy_damage");
             return false;
+        }
+
+            FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/NPC/sx_npc_enemy_death");
 
         FlyAway(fromCell);
         return true;

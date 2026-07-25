@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
+using FMODUnity;
 
 /// <summary>
 /// Boss: collectFly — UFO that flees on touch until hit count is reached, then can be carried to the hole.
@@ -52,6 +53,8 @@ public class BossCollectFly : MonoBehaviour
         MainGameObject.Fit(gameObject, _sr, data.cellSize);
 
         board.RegisterBoss(this);
+
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/NPC/sx_npc_ufo_spawn");
 
         _flying = true;
         transform.DOKill();
@@ -125,6 +128,8 @@ public class BossCollectFly : MonoBehaviour
         Vector2Int from = _player != null ? _player.GridPos : GridPos;
         if (!TryPickFarCell(from, out var next))
             return;
+
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/NPC/sx_npc_ufo_move");
 
         _flying = true;
         Vector3 world = _board.CellToWorld(next);

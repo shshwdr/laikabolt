@@ -1,8 +1,10 @@
+using FMODUnity;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
+using FMODUnity;
 
 public class UpgradePanelView : MonoBehaviour
 {
@@ -427,6 +429,9 @@ public class UpgradePanelView : MonoBehaviour
 
         if (!MetaSaveService.TryPurchase(metaSave, identifier))
             return;
+
+
+            FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_perkUnlock");
 
         RefreshAll();
         onMetaGoldChanged?.Invoke();

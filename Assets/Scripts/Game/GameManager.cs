@@ -138,6 +138,9 @@ public class GameManager : MonoBehaviour
         if (upgradeRoot != null)
             upgradeRoot.SetActive(false);
 
+        if (MusicManager.Instance != null)
+            MusicManager.Instance.SetGameState(0f);
+
         HideStoryAndExplore();
 
         if (storyView != null)
@@ -169,6 +172,9 @@ public class GameManager : MonoBehaviour
         if (storyView != null)
             storyView.HideImmediate();
 
+        if (MusicManager.Instance != null)
+            MusicManager.Instance.SetGameState(1f);
+
         ApplyExploreMode();
         BeginGame(start);
     }
@@ -197,6 +203,9 @@ public class GameManager : MonoBehaviour
 
         if (storyView != null)
             storyView.HideImmediate();
+
+        if (MusicManager.Instance != null)
+            MusicManager.Instance.SetGameState(1f);
 
         ApplyExploreMode();
         BeginGame(_pendingStart);
@@ -260,6 +269,9 @@ public class GameManager : MonoBehaviour
         save.HasSeenEndStory = true;
         MetaSaveService.Save(save);
         _metaSave = save;
+
+        if (MusicManager.Instance != null)
+            MusicManager.Instance.SetGameState(0f);
     }
 
     void HideExploreView()
@@ -364,6 +376,10 @@ public class GameManager : MonoBehaviour
     public void EnterUpgradeMode()
     {
         IsPlaying = false;
+
+        if (MusicManager.Instance != null)
+            MusicManager.Instance.SetGameState(0f);
+
         if (_spawn != null)
             _spawn.Stop();
         if (_specials != null)
