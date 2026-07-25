@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: GameData
   m_EditorClassIdentifier: 
   roundDuration: 10
-  collectableSpawnInterval: 2
+  collectableSpawnInterval: 3
   enemySpawnInterval: 5
   initialCollectables: 3
   initialEnemies: 1

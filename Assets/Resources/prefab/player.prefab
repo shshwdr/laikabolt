@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 239885124275908530, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: m_Color.b
-      value: 0.45597476
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 239885124275908530, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: m_Color.g
@@ -18,7 +18,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 239885124275908530, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: m_Color.r
-      value: 0.95362705
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 914729217804828831, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: m_Name
@@ -74,7 +74,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5666463460036181938, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: sizeScale
-      value: 1.2
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -86,6 +86,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 914729217804828831, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       insertIndex: -1
       addedObject: {fileID: -8824709933610414328}
+    - targetCorrespondingSourceObject: {fileID: 914729217804828831, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5151454745302076683}
   m_SourcePrefab: {fileID: 100100000, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
 --- !u!1 &4656280224208199141 stripped
 GameObject:
@@ -116,3 +119,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eeddb8a51f497e942ab21787e6502eee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  up: {fileID: 21300000, guid: 220580f47eb755441bc6d2e559c1bf5d, type: 3}
+  down: {fileID: 21300000, guid: 327cd1cd8d902b94883d002394351781, type: 3}
+  left: {fileID: 21300000, guid: 4f388b613716ead4fbb0d895787fe6a6, type: 3}
+  right: {fileID: 21300000, guid: 2d1f3c12084825543b873cd2617f09a3, type: 3}
+  upDash: {fileID: 21300000, guid: bf8475d1666d2354687dba6fdac844b2, type: 3}
+  downDash: {fileID: 21300000, guid: 491547663c65681439184d14fc8e1c32, type: 3}
+  leftDash: {fileID: 21300000, guid: 77233e068e11f5b44916867da2427a31, type: 3}
+  rightDash: {fileID: 21300000, guid: 89f22d6f45c02814c96e24b5d7cd0d07, type: 3}
+--- !u!114 &5151454745302076683
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4656280224208199141}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87c5295d99a16d94f8516bc148f4c14b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  identifier: player

@@ -17,6 +17,20 @@ public class MetaSaveData
     public int MaxUnlockedSceneId;
     /// <summary>Scene currently selected for the next explore run.</summary>
     public string SelectedSceneId = "0";
+    /// <summary>Player has finished (or skipped) the opening story at least once.</summary>
+    public bool HasSeenStartStory;
+    /// <summary>Player has finished (or skipped) the ending story at least once.</summary>
+    public bool HasSeenEndStory;
+    /// <summary>Player has finished the first game-over (timeout/fail) story.</summary>
+    public bool HasSeenOverStory;
+    /// <summary>Player has finished the first scene-clear story.</summary>
+    public bool HasSeenClearStory;
+    /// <summary>Player has finished the first boss-encounter story.</summary>
+    public bool HasSeenBossStory;
+    /// <summary>Main start tutorial has been completed.</summary>
+    public bool TutorialCompleted;
+    /// <summary>Tutorial groups marked finished via tutorial.csv finishGroup.</summary>
+    public string[] FinishedTutorialGroups = Array.Empty<string>();
 
     [NonSerialized] Dictionary<string, int> levelCache;
 

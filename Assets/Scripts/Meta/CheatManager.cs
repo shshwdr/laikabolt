@@ -27,6 +27,9 @@ public class CheatManager : MonoBehaviour
 
     void Update()
     {
+        if (_game != null && _game.IsStoryPlaying)
+            return;
+
         if (Input.GetKeyDown(KeyCode.R))
         {
             MetaSaveService.Reset();

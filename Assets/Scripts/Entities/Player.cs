@@ -2,22 +2,25 @@ using UnityEngine;
 
 /// <summary>
 /// Player visual: switches among 8 direction sprites (idle + dash).
-/// Sprites load from Resources/player/{up,down,left,right}[_dash].
+/// Assign in Inspector; unset slots fall back to Resources/player/{up,down,left,right}[_dash].
 /// </summary>
 public class Player : MonoBehaviour
 {
     const string ResourceRoot = "player/";
 
-    SpriteRenderer _sr;
-    Sprite _up;
-    Sprite _down;
-    Sprite _left;
-    Sprite _right;
-    Sprite _upDash;
-    Sprite _downDash;
-    Sprite _leftDash;
-    Sprite _rightDash;
+    [Header("Idle")]
+    [SerializeField] Sprite up;
+    [SerializeField] Sprite down;
+    [SerializeField] Sprite left;
+    [SerializeField] Sprite right;
 
+    [Header("Dash")]
+    [SerializeField] Sprite upDash;
+    [SerializeField] Sprite downDash;
+    [SerializeField] Sprite leftDash;
+    [SerializeField] Sprite rightDash;
+
+    SpriteRenderer _sr;
     Vector2Int _facing = new Vector2Int(0, 1);
     bool _dash;
 
@@ -27,7 +30,7 @@ public class Player : MonoBehaviour
     {
         _sr = SpriteUtil.ResolveRenderer(gameObject);
 
-        LoadSprites();
+        ResolveSprites();
         _sr.sortingOrder = 10;
         ApplySprite();
         MainGameObject.Fit(gameObject, _sr, cellSize);
@@ -59,16 +62,16 @@ public class Player : MonoBehaviour
         ApplySprite();
     }
 
-    void LoadSprites()
+    void ResolveSprites()
     {
-        _up = Resources.Load<Sprite>(ResourceRoot + "up");
-        _down = Resources.Load<Sprite>(ResourceRoot + "down");
-        _left = Resources.Load<Sprite>(ResourceRoot + "left");
-        _right = Resources.Load<Sprite>(ResourceRoot + "right");
-        _upDash = Resources.Load<Sprite>(ResourceRoot + "up_dash");
-        _downDash = Resources.Load<Sprite>(ResourceRoot + "down_dash");
-        _leftDash = Resources.Load<Sprite>(ResourceRoot + "left_dash");
-        _rightDash = Resources.Load<Sprite>(ResourceRoot + "right_dash");
+        up = SpriteUtil.LoadOr(up, ResourceRoot + "up");
+        down = SpriteUtil.LoadOr(down, ResourceRoot + "down");
+        left = SpriteUtil.LoadOr(left, ResourceRoot + "left");
+        right = SpriteUtil.LoadOr(right, ResourceRoot + "right");
+        upDash = SpriteUtil.LoadOr(upDash, ResourceRoot + "up_dash");
+        downDash = SpriteUtil.LoadOr(downDash, ResourceRoot + "down_dash");
+        leftDash = SpriteUtil.LoadOr(leftDash, ResourceRoot + "left_dash");
+        rightDash = SpriteUtil.LoadOr(rightDash, ResourceRoot + "right_dash");
     }
 
     void ApplySprite()
@@ -85,14 +88,14 @@ public class Player : MonoBehaviour
     Sprite ResolveSprite(Vector2Int dir, bool dash)
     {
         if (dir.y < 0)
-            return dash ? Prefer(_upDash, _up) : _up;
+            return dash ? Prefer(upDash, up) : up;
         if (dir.y > 0)
-            return dash ? Prefer(_downDash, _down) : _down;
+            return dash ? Prefer(downDash, down) : down;
         if (dir.x < 0)
-            return dash ? Prefer(_leftDash, _left) : _left;
+            return dash ? Prefer(leftDash, left) : left;
         if (dir.x > 0)
-            return dash ? Prefer(_rightDash, _right) : _right;
-        return dash ? Prefer(_downDash, _down) : _down;
+            return dash ? Prefer(rightDash, right) : right;
+        return dash ? Prefer(downDash, down) : down;
     }
 
     static Sprite Prefer(Sprite preferred, Sprite fallback) =>

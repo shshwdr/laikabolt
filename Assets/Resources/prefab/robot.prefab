@@ -16,6 +16,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: robot
       objectReference: {fileID: 0}
+    - target: {fileID: 3589873236674472436, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
+      propertyPath: frames.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3589873236674472436, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
+      propertyPath: frames.Array.data[0]
+      value: 
+      objectReference: {fileID: 21300000, guid: 8996b5e08b569154f8bf92e52d00f228, type: 3}
+    - target: {fileID: 3589873236674472436, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
+      propertyPath: frames.Array.data[1]
+      value: 
+      objectReference: {fileID: 21300000, guid: 5fbd6b6e613c9df4a9d43888232c9289, type: 3}
+    - target: {fileID: 3589873236674472436, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
+      propertyPath: frames.Array.data[2]
+      value: 
+      objectReference: {fileID: 21300000, guid: 211eea804c221bd409497087115fa7fa, type: 3}
     - target: {fileID: 5300874969197863331, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

@@ -97,6 +97,13 @@ public class ExploreView : MonoBehaviour
         sceneBK.color = Color.white;
     }
 
+    public void SetSceneBackgroundVisible(bool visible)
+    {
+        if (sceneBK == null)
+            return;
+        sceneBK.gameObject.SetActive(visible);
+    }
+
     public void SetTimer(float seconds)
     {
         if (timerText == null)
@@ -146,7 +153,7 @@ public class ExploreView : MonoBehaviour
         if (carryText == null)
             return;
 
-        carryText.text = $"Carry {carry}/{maxCarry}";
+        carryText.text = $"{carry}/{maxCarry}";
         carryText.color = carry >= maxCarry ? CarryFull : CarryNormal;
     }
 
@@ -278,6 +285,31 @@ public class ExploreView : MonoBehaviour
     void OnEndGameClicked()
     {
         onEndGame?.Invoke();
+    }
+
+    /// <summary>Registers HUD elements referenced by tutorial.csv higherSort (time, carry).</summary>
+    public void RegisterTutorialHudTargets()
+    {
+        EnsureHudTutorialTarget(timerText, "time");
+        EnsureHudTutorialTarget(carryText, "carry");
+    }
+
+    static void EnsureHudTutorialTarget(Component component, string identifier)
+    {
+        if (component == null || string.IsNullOrEmpty(identifier))
+            return;
+
+        var go = component.gameObject;
+        if (go.GetComponent<Canvas>() == null)
+        {
+            var canvas = go.AddComponent<Canvas>();
+            canvas.overrideSorting = false;
+        }
+
+        var target = go.GetComponent<TutorialGameobject>();
+        if (target == null)
+            target = go.AddComponent<TutorialGameobject>();
+        target.SetIdentifier(identifier);
     }
 
     void OnDestroy()

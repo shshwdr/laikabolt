@@ -38,7 +38,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 245.5, y: 145}
+  m_SizeDelta: {x: 245.5, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &460561753031713399
 CanvasRenderer:
@@ -69,7 +69,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: 757c0ef9f730ee44c8c53304344b0ee0, type: 3}
-  m_Type: 0
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -103,7 +103,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 0.25981957, g: 0.38433802, b: 0.5471698, a: 0.78431374}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -137,6 +137,12 @@ MonoBehaviour:
   button: {fileID: 3120761123114922288}
   icon: {fileID: 0}
   label: {fileID: 6460214647728675905}
+  labelColor: {r: 0, g: 0, b: 0, a: 1}
+  labelMaxedColor: {r: 0.45, g: 0.45, b: 0.48, a: 1}
+  iconMaxedColor: {r: 0.50628924, g: 0.50628924, b: 1, a: 1}
+  iconLockedColor: {r: 0.22, g: 0.22, b: 0.22, a: 1}
+  iconAffordableColor: {r: 1, g: 1, b: 1, a: 1}
+  iconCannotAffordColor: {r: 0.54901963, g: 0.14901958, b: 0.28576696, a: 1}
 --- !u!1001 &498384227131318871
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -219,7 +225,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8865203260008504549, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_SizeDelta.y
-      value: -22.1753
+      value: -24.449
       objectReference: {fileID: 0}
     - target: {fileID: 8865203260008504549, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -255,7 +261,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8865203260008504549, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 4.6725
+      value: 5.8094
       objectReference: {fileID: 0}
     - target: {fileID: 8865203260008504549, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

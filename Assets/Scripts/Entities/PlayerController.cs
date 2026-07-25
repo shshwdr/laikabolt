@@ -82,7 +82,10 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (_game == null || !_game.IsPlaying)
+        if (_game == null || !_game.IsPlaying || _game.IsStoryPlaying)
+            return;
+
+        if (TutorialManager.IsGameplayBlocked)
             return;
 
         // Dash hold must accumulate during move tweens (IsBusy), so a press

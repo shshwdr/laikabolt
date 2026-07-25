@@ -6,43 +6,67 @@ using TMPro;
 using UnityEngine;
 
 /// <summary>
-/// Reads Resources/story/start.txt. Blank lines split pages; each page fades in,
-/// click fades out then shows the next. When finished, fades out and invokes callback.
+/// Reads a Resources/story/*.txt. Blank lines split pages; each page fades in,
+/// click advances. ESC skips only when the skip hint is visible. When finished,
+/// fades out and invokes callback. Keyboard (except that ESC) is ignored.
 /// </summary>
 public class StoryView : MonoBehaviour
 {
-    const string StoryResourcePath = "story/start";
-
     [SerializeField] GameObject panel;
     [SerializeField] CanvasGroup canvasGroup;
     [SerializeField] TMP_Text storyText;
+    [SerializeField] GameObject skipHint;
     [SerializeField] float fadeDuration = 0.45f;
+    [Header("Page Reveal")]
+    [Tooltip("Shown when GameManager reveals it (e.g. 5th start-story page).")]
+    [SerializeField] GameObject pageRevealObject;
 
     Action onComplete;
+    Action<int> onPageChanged;
     readonly List<string> _pages = new List<string>();
     int _pageIndex;
     bool _busy;
     bool _listening;
+    bool _playing;
+    bool _finished;
     Tween _tween;
 
-    public void Setup(Action completeCallback)
+    public bool IsPlaying => _playing;
+
+    public void SetPageRevealVisible(bool visible)
     {
-        onComplete = completeCallback;
+        if (pageRevealObject != null)
+            pageRevealObject.SetActive(visible);
+    }
+
+    public void Setup()
+    {
         HideImmediate();
     }
 
-    public void Play()
+    /// <param name="resourcePath">Path under Resources without extension, e.g. "story/start".</param>
+    /// <param name="showSkipHint">True when the player has seen this story before.</param>
+    /// <param name="pageChangedCallback">Optional; invoked with 0-based page index when a page is shown.</param>
+    public void Play(string resourcePath, bool showSkipHint, Action completeCallback, Action<int> pageChangedCallback = null)
     {
         KillTween();
         _pages.Clear();
         _pageIndex = 0;
         _busy = false;
         _listening = false;
+        _finished = false;
+        _playing = false;
+        onComplete = completeCallback;
+        onPageChanged = pageChangedCallback;
+        SetPageRevealVisible(false);
 
-        if (!TryLoadPages())
+        if (skipHint != null)
+            skipHint.SetActive(showSkipHint);
+
+        if (!TryLoadPages(resourcePath))
         {
             HideImmediate();
-            onComplete?.Invoke();
+            InvokeComplete();
             return;
         }
 
@@ -63,6 +87,7 @@ public class StoryView : MonoBehaviour
             SetTextAlpha(0f);
         }
 
+        _playing = true;
         ShowPage(0);
     }
 
@@ -71,6 +96,10 @@ public class StoryView : MonoBehaviour
         KillTween();
         _listening = false;
         _busy = false;
+        _playing = false;
+        SetPageRevealVisible(false);
+        if (skipHint != null)
+            skipHint.SetActive(false);
         SetPanelActive(false);
         if (canvasGroup != null)
         {
@@ -79,22 +108,32 @@ public class StoryView : MonoBehaviour
             canvasGroup.interactable = false;
         }
 
-        // Keep the whole story root off until Play() so it never blocks Title clicks.
         gameObject.SetActive(false);
     }
 
     void Update()
     {
+        if (!_playing || _finished)
+            return;
+
+        // ESC skips only when the skip hint is shown (story already seen once).
+        if (skipHint != null && skipHint.activeSelf && Input.GetKeyDown(KeyCode.Escape))
+        {
+            Finish();
+            return;
+        }
+
+        // Advance by mouse only — Space/Enter must not drive story or gameplay.
         if (!_listening || _busy)
             return;
 
-        if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
+        if (Input.GetMouseButtonDown(0))
             Advance();
     }
 
     void Advance()
     {
-        if (_busy)
+        if (_busy || _finished)
             return;
 
         int next = _pageIndex + 1;
@@ -106,9 +145,13 @@ public class StoryView : MonoBehaviour
 
     void ShowPage(int index)
     {
+        if (_finished)
+            return;
+
         _pageIndex = index;
         _busy = true;
         _listening = false;
+        onPageChanged?.Invoke(index);
 
         if (storyText != null)
         {
@@ -120,6 +163,8 @@ public class StoryView : MonoBehaviour
                 .SetUpdate(true)
                 .OnComplete(() =>
                 {
+                    if (_finished)
+                        return;
                     _busy = false;
                     _listening = true;
                 });
@@ -133,6 +178,9 @@ public class StoryView : MonoBehaviour
 
     void TransitionToPage(int index)
     {
+        if (_finished)
+            return;
+
         _busy = true;
         _listening = false;
         KillTween();
@@ -147,14 +195,28 @@ public class StoryView : MonoBehaviour
             .DOFade(0f, fadeDuration)
             .SetLink(gameObject)
             .SetUpdate(true)
-            .OnComplete(() => ShowPage(index));
+            .OnComplete(() =>
+            {
+                if (!_finished)
+                    ShowPage(index);
+            });
     }
 
     void Finish()
     {
+        if (_finished)
+            return;
+
+        _finished = true;
         _busy = true;
         _listening = false;
+        _playing = false;
         KillTween();
+
+        if (skipHint != null)
+            skipHint.SetActive(false);
+
+        SetPageRevealVisible(false);
 
         Sequence seq = DOTween.Sequence().SetLink(gameObject).SetUpdate(true);
 
@@ -170,25 +232,37 @@ public class StoryView : MonoBehaviour
         {
             SetPanelActive(false);
             _busy = false;
-            onComplete?.Invoke();
+            gameObject.SetActive(false);
+            InvokeComplete();
         });
 
         _tween = seq;
     }
 
-    bool TryLoadPages()
+    void InvokeComplete()
     {
-        var asset = Resources.Load<TextAsset>(StoryResourcePath);
+        var cb = onComplete;
+        onComplete = null;
+        onPageChanged = null;
+        cb?.Invoke();
+    }
+
+    bool TryLoadPages(string resourcePath)
+    {
+        if (string.IsNullOrEmpty(resourcePath))
+            return false;
+
+        var asset = Resources.Load<TextAsset>(resourcePath);
         if (asset == null)
         {
-            Debug.LogWarning($"StoryView: missing Resources/{StoryResourcePath}.txt");
+            Debug.LogWarning($"StoryView: missing Resources/{resourcePath}.txt");
             return false;
         }
 
         ParsePages(asset.text, _pages);
         if (_pages.Count == 0)
         {
-            Debug.LogWarning("StoryView: story file has no content.");
+            Debug.LogWarning($"StoryView: {resourcePath} has no content.");
             return false;
         }
 

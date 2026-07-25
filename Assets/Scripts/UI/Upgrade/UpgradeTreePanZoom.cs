@@ -1,36 +1,63 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 public class UpgradeTreePanZoom : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
+    const float DragThresholdPixels = 8f;
+
     RectTransform viewport;
     RectTransform panTarget;
     Canvas canvas;
     float minScale = 0.4f;
     float maxScale = 2.5f;
-    float scrollSensitivity = 0.35f;
+    float zoomStep = 0.35f;
     bool pointerInside;
+    bool pressActive;
     bool dragging;
+    bool suppressClick;
+    Vector2 pressScreenPos;
     Vector2 lastLocalPoint;
     float scale = 1f;
 
-    public void Setup(RectTransform viewportRect, RectTransform target, float sensitivity = 0.35f)
+    public void Setup(
+        RectTransform viewportRect,
+        RectTransform target,
+        float zoomStepValue = 0.35f,
+        float minZoom = 0.4f,
+        float maxZoom = 2.5f)
     {
         viewport = viewportRect;
         panTarget = target;
         canvas = viewport != null ? viewport.GetComponentInParent<Canvas>() : null;
-        scrollSensitivity = Mathf.Max(0.01f, sensitivity);
+        zoomStep = Mathf.Max(0.01f, zoomStepValue);
+        minScale = Mathf.Max(0.01f, minZoom);
+        maxScale = Mathf.Max(minScale, maxZoom);
         ResetView();
     }
 
     public void ResetView()
     {
-        scale = 1f;
+        scale = maxScale;
+        pressActive = false;
+        dragging = false;
+        suppressClick = false;
         if (panTarget != null)
         {
-            panTarget.localScale = Vector3.one;
+            panTarget.localScale = Vector3.one * scale;
             panTarget.anchoredPosition = Vector2.zero;
         }
+    }
+
+    /// <summary>
+    /// Returns true once after a pan drag, so upgrade click handlers can ignore that release.
+    /// </summary>
+    public bool ConsumeSuppressClick()
+    {
+        if (!suppressClick)
+            return false;
+        suppressClick = false;
+        return true;
     }
 
     void Update()
@@ -38,32 +65,53 @@ public class UpgradeTreePanZoom : MonoBehaviour, IPointerEnterHandler, IPointerE
         if (panTarget == null || viewport == null || !gameObject.activeInHierarchy)
             return;
 
-        if (!pointerInside && !dragging)
+        if (!pointerInside && !pressActive)
             return;
 
-        if (Input.GetMouseButtonDown(0) && pointerInside && !IsPointerOverButton())
+        if (Input.GetMouseButtonDown(0) && pointerInside)
         {
             if (TryGetLocalPoint(Input.mousePosition, out lastLocalPoint))
-                dragging = true;
+            {
+                pressActive = true;
+                dragging = false;
+                suppressClick = false;
+                pressScreenPos = Input.mousePosition;
+            }
         }
 
-        if (Input.GetMouseButtonUp(0))
-            dragging = false;
-
-        if (dragging && Input.GetMouseButton(0))
+        if (pressActive && Input.GetMouseButton(0))
         {
-            if (TryGetLocalPoint(Input.mousePosition, out var current))
+            if (!dragging)
+            {
+                float moved = Vector2.Distance(Input.mousePosition, pressScreenPos);
+                if (moved >= DragThresholdPixels)
+                {
+                    dragging = true;
+                    suppressClick = true;
+                    CancelPressedButton();
+                    if (TryGetLocalPoint(Input.mousePosition, out lastLocalPoint))
+                    { }
+                }
+            }
+
+            if (dragging && TryGetLocalPoint(Input.mousePosition, out var current))
             {
                 panTarget.anchoredPosition += current - lastLocalPoint;
                 lastLocalPoint = current;
             }
         }
 
+        if (Input.GetMouseButtonUp(0))
+        {
+            pressActive = false;
+            dragging = false;
+        }
+
         float scroll = Input.mouseScrollDelta.y;
         if (Mathf.Abs(scroll) > 0.01f && pointerInside)
         {
             float prevScale = scale;
-            scale = Mathf.Clamp(scale + scroll * scrollSensitivity, minScale, maxScale);
+            scale = Mathf.Clamp(scale + scroll * zoomStep, minScale, maxScale);
             if (Mathf.Approximately(prevScale, scale))
                 return;
 
@@ -100,10 +148,10 @@ public class UpgradeTreePanZoom : MonoBehaviour, IPointerEnterHandler, IPointerE
         return canvas.worldCamera != null ? canvas.worldCamera : Camera.main;
     }
 
-    bool IsPointerOverButton()
+    static void CancelPressedButton()
     {
         if (EventSystem.current == null)
-            return false;
+            return;
 
         var pointerData = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
         var results = new System.Collections.Generic.List<RaycastResult>();
@@ -111,11 +159,14 @@ public class UpgradeTreePanZoom : MonoBehaviour, IPointerEnterHandler, IPointerE
 
         foreach (var result in results)
         {
-            if (result.gameObject.GetComponentInParent<UnityEngine.UI.Button>() != null)
-                return true;
-        }
+            var button = result.gameObject.GetComponentInParent<Button>();
+            if (button == null)
+                continue;
 
-        return false;
+            ExecuteEvents.Execute(button.gameObject, pointerData, ExecuteEvents.pointerUpHandler);
+            ExecuteEvents.Execute(button.gameObject, pointerData, ExecuteEvents.pointerExitHandler);
+            break;
+        }
     }
 
     public void OnPointerEnter(PointerEventData eventData) => pointerInside = true;
@@ -123,6 +174,10 @@ public class UpgradeTreePanZoom : MonoBehaviour, IPointerEnterHandler, IPointerE
     public void OnPointerExit(PointerEventData eventData)
     {
         pointerInside = false;
-        dragging = false;
+        if (!Input.GetMouseButton(0))
+        {
+            pressActive = false;
+            dragging = false;
+        }
     }
 }

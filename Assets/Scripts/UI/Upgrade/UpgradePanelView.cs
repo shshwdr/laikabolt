@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class UpgradePanelView : MonoBehaviour
@@ -23,7 +24,12 @@ public class UpgradePanelView : MonoBehaviour
     [SerializeField] RectTransform treeViewport;
     [SerializeField] RectTransform treeRoot;
     [SerializeField] RectTransform lineRoot;
-    [SerializeField] float treeScrollSensitivity = 0.35f;
+    [SerializeField] float treeMinZoom = 0.4f;
+    [SerializeField] float treeMaxZoom = 2.5f;
+    [FormerlySerializedAs("treeScrollSensitivity")]
+    [SerializeField] float treeZoomStep = 0.35f;
+    [Tooltip("Center-to-center distance between adjacent upgrade cells.")]
+    [SerializeField] float treeNodeSpacing = 320f;
 
     [Header("Connection Lines")]
     [Tooltip("Line thickness (RectTransform height).")]
@@ -45,8 +51,6 @@ public class UpgradePanelView : MonoBehaviour
 
     readonly Dictionary<string, UpgradeNodeView> nodeViews = new Dictionary<string, UpgradeNodeView>();
     readonly List<SceneCell> sceneCells = new List<SceneCell>();
-    RectTransform playerMarker;
-    Image playerMarkerImage;
 
     class UpgradeNodeView
     {
@@ -174,7 +178,7 @@ public class UpgradePanelView : MonoBehaviour
             panZoom = treeViewport.GetComponent<UpgradeTreePanZoom>();
             if (panZoom == null)
                 panZoom = treeViewport.gameObject.AddComponent<UpgradeTreePanZoom>();
-            panZoom.Setup(treeViewport, treeRoot, treeScrollSensitivity);
+            panZoom.Setup(treeViewport, treeRoot, treeZoomStep, treeMinZoom, treeMaxZoom);
         }
     }
 
@@ -203,7 +207,8 @@ public class UpgradePanelView : MonoBehaviour
 
     Dictionary<string, Vector2> BuildLayoutPositions()
     {
-        UpgradeTreeLayout.TryBuild(buttonSize * 2f, out var positions);
+        float spacing = treeNodeSpacing > 0.01f ? treeNodeSpacing : buttonSize * 2f;
+        UpgradeTreeLayout.TryBuild(spacing, out var positions);
         return positions;
     }
 
@@ -277,7 +282,6 @@ public class UpgradePanelView : MonoBehaviour
         foreach (var info in CSVLoader.GetAllScenes())
             CreateSceneButton(info);
 
-        EnsurePlayerMarker();
         RefreshSceneButtons();
     }
 
@@ -357,28 +361,8 @@ public class UpgradePanelView : MonoBehaviour
             cell.Button.onClick.AddListener(() => OnSceneClicked(captured));
         }
 
+        cell.SetPlayerVisible(false);
         sceneCells.Add(cell);
-    }
-
-    void EnsurePlayerMarker()
-    {
-        if (playerMarker != null)
-            return;
-
-        var go = new GameObject("PlayerMarker", typeof(RectTransform));
-        playerMarker = (RectTransform)go.transform;
-        playerMarker.SetParent(transform, false);
-        playerMarker.sizeDelta = new Vector2(40f, 40f);
-        playerMarker.anchorMin = new Vector2(0.5f, 0.5f);
-        playerMarker.anchorMax = new Vector2(0.5f, 0.5f);
-        playerMarker.pivot = new Vector2(0.5f, 0.5f);
-
-        playerMarkerImage = go.AddComponent<Image>();
-        var playerSprite = Resources.Load<Sprite>("player/down");
-        playerMarkerImage.sprite = playerSprite != null ? playerSprite : buttonSprite;
-        playerMarkerImage.preserveAspect = true;
-        playerMarkerImage.raycastTarget = false;
-        playerMarker.gameObject.SetActive(false);
     }
 
     void OnSceneClicked(string identifier)
@@ -438,6 +422,9 @@ public class UpgradePanelView : MonoBehaviour
 
     void OnUpgradeClicked(string identifier)
     {
+        if (panZoom != null && panZoom.ConsumeSuppressClick())
+            return;
+
         if (!MetaSaveService.TryPurchase(metaSave, identifier))
             return;
 
@@ -468,7 +455,6 @@ public class UpgradePanelView : MonoBehaviour
             return;
 
         string selected = MetaSaveService.GetSelectedSceneId(metaSave);
-        SceneCell selectedCell = null;
 
         foreach (var cell in sceneCells)
         {
@@ -499,32 +485,8 @@ public class UpgradePanelView : MonoBehaviour
                 cell.Label.text = unlocked ? name : $"{name}\nLocked";
             }
 
-            if (isSelected && unlocked)
-                selectedCell = cell;
+            cell.SetPlayerVisible(isSelected && unlocked);
         }
-
-        UpdatePlayerMarker(selectedCell);
-    }
-
-    void UpdatePlayerMarker(SceneCell selected)
-    {
-        if (playerMarker == null)
-            return;
-
-        if (selected == null || selected.Icon == null)
-        {
-            playerMarker.gameObject.SetActive(false);
-            return;
-        }
-
-        playerMarker.gameObject.SetActive(true);
-        playerMarker.SetParent(selected.Icon.rectTransform, false);
-        playerMarker.anchorMin = new Vector2(0.5f, 0.5f);
-        playerMarker.anchorMax = new Vector2(0.5f, 0.5f);
-        playerMarker.pivot = new Vector2(0.5f, 0.5f);
-        playerMarker.anchoredPosition = selected.PlayerMarkerOffset;
-        playerMarker.localScale = Vector3.one;
-        playerMarker.SetAsLastSibling();
     }
 
     void RefreshUpgradeButton(UpgradeNodeView node)
@@ -538,27 +500,12 @@ public class UpgradePanelView : MonoBehaviour
         bool locked = MetaSaveService.IsLocked(metaSave, info);
 
         if (node.Cell.Label != null)
-        {
             node.Cell.Label.text = BuildUpgradeLabel(info);
-            node.Cell.Label.color = maxed
-                ? new Color(0.45f, 0.45f, 0.48f, 1f)
-                : Color.white;
-        }
 
         if (node.Cell.Button != null)
             node.Cell.Button.interactable = canBuy;
 
-        if (node.Cell.Icon == null)
-            return;
-
-        if (maxed)
-            node.Cell.Icon.color = new Color(0.12f, 0.12f, 0.14f, 1f);
-        else if (locked)
-            node.Cell.Icon.color = new Color(0.22f, 0.22f, 0.22f, 1f);
-        else if (canBuy)
-            node.Cell.Icon.color = new Color(0.25f, 0.45f, 0.8f, 1f);
-        else
-            node.Cell.Icon.color = new Color(0.45f, 0.28f, 0.28f, 1f);
+        node.Cell.ApplyVisualState(maxed, locked, canBuy);
     }
 
     string BuildUpgradeLabel(UpgradeInfo info)

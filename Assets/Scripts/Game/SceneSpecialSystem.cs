@@ -54,8 +54,6 @@ public class SceneSpecialSystem : MonoBehaviour
     ParsedSpecial _special;
     GameObject _pointPrePrefab;
     GameObject _pointDamagePrefab;
-    Sprite _linePre;
-    Sprite _lineDamage;
     Sprite _iceSkate;
     float _spawnTimer;
     bool _active;
@@ -86,8 +84,6 @@ public class SceneSpecialSystem : MonoBehaviour
 
         _pointPrePrefab = PrefabUtil.Load("prefab/pointDamagePre");
         _pointDamagePrefab = PrefabUtil.Load("prefab/pointDamageDamage");
-        _linePre = LoadSprite("lineDamagePre");
-        _lineDamage = LoadSprite("lineDamageDamage");
         _iceSkate = LoadSprite("iceSkate");
     }
 
@@ -474,7 +470,9 @@ public class SceneSpecialSystem : MonoBehaviour
     {
         ClearVisuals(h);
 
-        if (h.Kind == SpecialKind.PointDamage || h.Kind == SpecialKind.PointDamage2)
+        if (h.Kind == SpecialKind.PointDamage
+            || h.Kind == SpecialKind.PointDamage2
+            || h.Kind == SpecialKind.LineDamage)
         {
             var prefab = h.Phase == HazardPhase.Warning ? _pointPrePrefab : _pointDamagePrefab;
             string fallback = h.Phase == HazardPhase.Warning ? "pointDamagePre" : "pointDamageDamage";
@@ -483,23 +481,12 @@ public class SceneSpecialSystem : MonoBehaviour
             return;
         }
 
-        Sprite sprite;
-        Color tint = Color.white;
-        switch (h.Kind)
+        if (h.Kind == SpecialKind.IceSkate)
         {
-            case SpecialKind.LineDamage:
-                sprite = h.Phase == HazardPhase.Warning ? _linePre : _lineDamage;
-                break;
-            case SpecialKind.IceSkate:
-                sprite = _iceSkate;
-                tint = new Color(0.7f, 0.9f, 1f, 0.95f);
-                break;
-            default:
-                return;
+            var tint = new Color(0.7f, 0.9f, 1f, 0.95f);
+            for (int i = 0; i < h.OccupiedCells.Count; i++)
+                h.Visuals.Add(CreateOverlay(h.OccupiedCells[i], _iceSkate, tint));
         }
-
-        for (int i = 0; i < h.OccupiedCells.Count; i++)
-            h.Visuals.Add(CreateOverlay(h.OccupiedCells[i], sprite, tint));
     }
 
     GameObject CreateOverlayFromPrefab(Vector2Int cell, GameObject prefab, string fallbackName)

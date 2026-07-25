@@ -67,8 +67,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 8a219f7913abc5546a62b9f6255cc91a, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -142,6 +142,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6867381603429350934, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 5480535538464336383, guid: 7bb9148a509569c4b9ba337660de692b, type: 2}
+    - target: {fileID: 6867381603429350934, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_fontColor32.rgba
       value: 4278190080
       objectReference: {fileID: 0}
@@ -175,11 +179,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8865203260008504549, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: -20
       objectReference: {fileID: 0}
     - target: {fileID: 8865203260008504549, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: -14.3181
       objectReference: {fileID: 0}
     - target: {fileID: 8865203260008504549, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -215,7 +219,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8865203260008504549, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: 2.841
       objectReference: {fileID: 0}
     - target: {fileID: 8865203260008504549, guid: 653378a0f63db55498ae52081b96d89d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
