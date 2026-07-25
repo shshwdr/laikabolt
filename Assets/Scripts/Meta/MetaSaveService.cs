@@ -85,7 +85,11 @@ public static class MetaSaveService
                 case "machineCollect":
                     config.machineCollectCount += level;
                     config.machineCollect = config.machineCollectCount > 0;
-                    config.machineCollectInterval = info.value * level;
+                    break;
+                case "machineSpeed":
+                    // value is tenths of a second (1 → 0.1s). Faster upgrades take priority.
+                    float interval = Mathf.Max(0.01f, info.value * 0.1f);
+                    config.machineCollectInterval = Mathf.Min(config.machineCollectInterval, interval);
                     break;
                 case "bonusGenerate":
                     config.bonusGenerateBonus += info.value * level;

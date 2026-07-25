@@ -514,7 +514,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: -547405023
   m_SortingOrder: 32767
@@ -3875,7 +3875,7 @@ MonoBehaviour:
   endGameButton: {fileID: 637250442}
   toastGroup: {fileID: 0}
   sceneBK: {fileID: 1592376416}
-  scoreTickInterval: 0.3
+  scoreTickInterval: 0.15
   timerPunchDuration: 0.28
   timerPunchBase: 1
   timerPunchStep: 1.5
