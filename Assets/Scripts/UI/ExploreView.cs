@@ -81,7 +81,7 @@ public class ExploreView : MonoBehaviour
     public void SetScore(int score)
     {
         if (scoreText != null)
-            scoreText.text = $"Score {score}";
+            scoreText.text = $"{score}";
     }
 
     public void SetCarry(int carry, int maxCarry)

@@ -15,7 +15,7 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639205009773671621
+  lastModified: 639205806480110887
   FileSizes:
   - Name: Desktop
     Value: 780
@@ -35,7 +35,7 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639205009773670867
+  lastModified: 639205806480110887
   FileSizes:
   - Name: Desktop
     Value: 388256
@@ -63,7 +63,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: -8696051253084561046}
   cacheVersion: 131860
-  cacheTime: 639205009773671621
+  cacheTime: 639205806480110887
   SerializableEventsDict:
   - key: event:/Music/mus_gameplay
     index: 0
