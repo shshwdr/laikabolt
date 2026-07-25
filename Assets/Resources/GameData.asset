@@ -21,7 +21,8 @@ MonoBehaviour:
   playerHitDamage: 1
   jumpDistance: 0
   passBorder: 0
-  enemyFoodDrop: 0
+  enemyFoodDrop: 1
+  enemyFoodChance: 20
   foodCollectAmount: 0
   machineCollect: 0
   machineCollectCount: 0

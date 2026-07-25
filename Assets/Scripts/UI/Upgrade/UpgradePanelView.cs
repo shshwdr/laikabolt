@@ -6,7 +6,6 @@ using UnityEngine.UI;
 public class UpgradePanelView : MonoBehaviour
 {
     const float DefaultButtonSize = 160f;
-    const float SceneButtonSize = 96f;
 
     [Header("Texts (place & position in scene)")]
     [SerializeField] TMP_Text titleText;
@@ -16,19 +15,27 @@ public class UpgradePanelView : MonoBehaviour
     [Header("Buttons (place & position in scene)")]
     [SerializeField] Button startNextRunButton;
 
+    [Header("Prefabs")]
+    [SerializeField] GameObject upgradeCellPrefab;
+    [SerializeField] GameObject sceneCellPrefab;
+
     [Header("Upgrade Tree (place containers in scene)")]
     [SerializeField] RectTransform treeViewport;
     [SerializeField] RectTransform treeRoot;
     [SerializeField] RectTransform lineRoot;
     [SerializeField] float treeScrollSensitivity = 0.35f;
 
+    [Header("Connection Lines")]
+    [Tooltip("Line thickness (RectTransform height).")]
+    [SerializeField] float lineWidth = 2f;
+    [Tooltip("1 = full distance between nodes. Values below 1 shorten the line toward the midpoint.")]
+    [SerializeField] float lineLength = 1f;
+
     [Header("Scenes (optional; created at runtime if null)")]
     [SerializeField] RectTransform sceneRow;
-    [SerializeField] Vector2 defaultPlayerMarkerOffset = new Vector2(52f, 40f);
 
     MetaSaveData metaSave;
     Sprite buttonSprite;
-    [SerializeField] GameObject upgradeCellPrefab;
     UpgradeTreePanZoom panZoom;
     bool built;
     System.Action onMetaGoldChanged;
@@ -37,7 +44,7 @@ public class UpgradePanelView : MonoBehaviour
     float buttonSize = DefaultButtonSize;
 
     readonly Dictionary<string, UpgradeNodeView> nodeViews = new Dictionary<string, UpgradeNodeView>();
-    readonly List<SceneButtonView> sceneButtons = new List<SceneButtonView>();
+    readonly List<SceneCell> sceneCells = new List<SceneCell>();
     RectTransform playerMarker;
     Image playerMarkerImage;
 
@@ -79,7 +86,7 @@ public class UpgradePanelView : MonoBehaviour
         CSVLoader.Init();
         buttonSprite = SpriteUtil.WhiteSprite();
         if (upgradeCellPrefab == null)
-            Debug.LogError($"UpgradePanelView: prefab not found.");
+            Debug.LogError("UpgradePanelView: upgradeCellPrefab is not assigned.");
         else
         {
             var prefabRect = upgradeCellPrefab.GetComponent<RectTransform>();
@@ -90,6 +97,9 @@ public class UpgradePanelView : MonoBehaviour
                     buttonSize = size;
             }
         }
+
+        if (sceneCellPrefab == null)
+            Debug.LogError("UpgradePanelView: sceneCellPrefab is not assigned.");
 
         BuildTreeNodes();
         BuildSceneRow();
@@ -259,7 +269,7 @@ public class UpgradePanelView : MonoBehaviour
     void BuildSceneRow()
     {
         EnsureSceneRow();
-        sceneButtons.Clear();
+        sceneCells.Clear();
 
         for (int i = sceneRow.childCount - 1; i >= 0; i--)
             Destroy(sceneRow.GetChild(i).gameObject);
@@ -296,59 +306,58 @@ public class UpgradePanelView : MonoBehaviour
 
     void CreateSceneButton(SceneInfo info)
     {
+        if (sceneCellPrefab == null)
+        {
+            Debug.LogError("UpgradePanelView: failed to draw scene because sceneCellPrefab is missing.");
+            return;
+        }
+
         string id = info.ResolvedIdentifier;
+        var go = Instantiate(sceneCellPrefab, sceneRow);
+        go.name = "Scene_" + id;
 
-        var go = new GameObject("Scene_" + id, typeof(RectTransform));
-        var rt = (RectTransform)go.transform;
-        rt.SetParent(sceneRow, false);
-        rt.sizeDelta = new Vector2(SceneButtonSize + 24f, SceneButtonSize + 36f);
+        var cell = go.GetComponent<SceneCell>();
+        if (cell == null)
+        {
+            Debug.LogError(
+                "UpgradePanelView: sceneCell prefab is missing SceneCell. Attach it on the prefab root and wire Button / Icon / Label.");
+            Destroy(go);
+            return;
+        }
 
-        var layout = go.AddComponent<LayoutElement>();
-        layout.preferredWidth = SceneButtonSize + 24f;
-        layout.preferredHeight = SceneButtonSize + 36f;
+        cell.SetIdentifier(id);
 
-        var iconGo = new GameObject("Icon", typeof(RectTransform));
-        var iconRt = (RectTransform)iconGo.transform;
-        iconRt.SetParent(rt, false);
-        iconRt.anchorMin = new Vector2(0.5f, 1f);
-        iconRt.anchorMax = new Vector2(0.5f, 1f);
-        iconRt.pivot = new Vector2(0.5f, 1f);
-        iconRt.anchoredPosition = new Vector2(0f, -4f);
-        iconRt.sizeDelta = new Vector2(SceneButtonSize, SceneButtonSize);
+        var rt = go.GetComponent<RectTransform>();
+        if (rt != null && go.GetComponent<LayoutElement>() == null)
+        {
+            var layout = go.AddComponent<LayoutElement>();
+            layout.preferredWidth = Mathf.Max(rt.sizeDelta.x, 1f);
+            layout.preferredHeight = Mathf.Max(rt.sizeDelta.y, 1f);
+        }
 
-        var icon = iconGo.AddComponent<Image>();
-        var sprite = Resources.Load<Sprite>("scene/" + id);
-        icon.sprite = sprite != null ? sprite : buttonSprite;
-        icon.preserveAspect = true;
-        icon.color = sprite != null ? Color.white : new Color(0.35f, 0.55f, 0.85f, 1f);
+        if (cell.Icon != null)
+        {
+            var sprite = Resources.Load<Sprite>("scene/" + id);
+            cell.Icon.sprite = sprite != null ? sprite : buttonSprite;
+            cell.Icon.preserveAspect = true;
+            cell.Icon.color = sprite != null ? Color.white : new Color(0.35f, 0.55f, 0.85f, 1f);
+        }
 
-        var button = iconGo.AddComponent<Button>();
-        button.targetGraphic = icon;
+        if (cell.Label != null)
+        {
+            if (TMP_Settings.defaultFontAsset != null)
+                cell.Label.font = TMP_Settings.defaultFontAsset;
+            cell.Label.text = string.IsNullOrEmpty(info.name) ? id : info.name;
+        }
 
-        var labelGo = new GameObject("Name", typeof(RectTransform));
-        var labelRt = (RectTransform)labelGo.transform;
-        labelRt.SetParent(rt, false);
-        labelRt.anchorMin = new Vector2(0f, 0f);
-        labelRt.anchorMax = new Vector2(1f, 0f);
-        labelRt.pivot = new Vector2(0.5f, 0f);
-        labelRt.anchoredPosition = Vector2.zero;
-        labelRt.sizeDelta = new Vector2(0f, 28f);
+        if (cell.Button != null)
+        {
+            string captured = id;
+            cell.Button.onClick.RemoveAllListeners();
+            cell.Button.onClick.AddListener(() => OnSceneClicked(captured));
+        }
 
-        var label = labelGo.AddComponent<TextMeshProUGUI>();
-        if (TMP_Settings.defaultFontAsset != null)
-            label.font = TMP_Settings.defaultFontAsset;
-        label.fontSize = 18f;
-        label.alignment = TextAlignmentOptions.Center;
-        label.color = Color.white;
-        label.text = string.IsNullOrEmpty(info.name) ? id : info.name;
-        label.raycastTarget = false;
-
-        var view = go.AddComponent<SceneButtonView>();
-        view.Bind(id, button, icon, label, defaultPlayerMarkerOffset);
-
-        string captured = id;
-        button.onClick.AddListener(() => OnSceneClicked(captured));
-        sceneButtons.Add(view);
+        sceneCells.Add(cell);
     }
 
     void EnsurePlayerMarker()
@@ -402,9 +411,13 @@ public class UpgradePanelView : MonoBehaviour
         rect.pivot = new Vector2(0f, 0.5f);
 
         float distance = Vector2.Distance(from, to);
+        float lengthScale = Mathf.Max(0f, lineLength);
+        float length = distance * lengthScale;
         float angle = Mathf.Atan2(to.y - from.y, to.x - from.x) * Mathf.Rad2Deg;
-        rect.anchoredPosition = from;
-        rect.sizeDelta = new Vector2(distance, 2f);
+        Vector2 dir = distance > 0.001f ? (to - from) / distance : Vector2.right;
+
+        rect.anchoredPosition = from + dir * ((distance - length) * 0.5f);
+        rect.sizeDelta = new Vector2(length, Mathf.Max(0.01f, lineWidth));
         rect.localRotation = Quaternion.Euler(0f, 0f, angle);
 
         var image = go.AddComponent<Image>();
@@ -455,45 +468,45 @@ public class UpgradePanelView : MonoBehaviour
             return;
 
         string selected = MetaSaveService.GetSelectedSceneId(metaSave);
-        SceneButtonView selectedView = null;
+        SceneCell selectedCell = null;
 
-        foreach (var view in sceneButtons)
+        foreach (var cell in sceneCells)
         {
-            if (view == null)
+            if (cell == null)
                 continue;
 
-            var info = CSVLoader.GetScene(view.Identifier);
+            var info = CSVLoader.GetScene(cell.Identifier);
             bool unlocked = info != null && metaSave.IsSceneUnlocked(info.SceneId);
-            bool isSelected = view.Identifier == selected;
+            bool isSelected = cell.Identifier == selected;
 
-            if (view.Button != null)
-                view.Button.interactable = unlocked;
+            if (cell.Button != null)
+                cell.Button.interactable = unlocked;
 
-            if (view.Icon != null)
+            if (cell.Icon != null)
             {
                 if (!unlocked)
-                    view.Icon.color = new Color(0.25f, 0.25f, 0.28f, 1f);
+                    cell.Icon.color = new Color(0.25f, 0.25f, 0.28f, 1f);
                 else if (isSelected)
-                    view.Icon.color = Color.white;
+                    cell.Icon.color = Color.white;
                 else
-                    view.Icon.color = new Color(0.75f, 0.75f, 0.8f, 1f);
+                    cell.Icon.color = new Color(0.75f, 0.75f, 0.8f, 1f);
             }
 
-            if (view.Label != null)
+            if (cell.Label != null)
             {
-                view.Label.color = unlocked ? Color.white : new Color(0.45f, 0.45f, 0.48f, 1f);
-                string name = info != null && !string.IsNullOrEmpty(info.name) ? info.name : view.Identifier;
-                view.Label.text = unlocked ? name : $"{name}\nLocked";
+                cell.Label.color = unlocked ? Color.white : new Color(0.45f, 0.45f, 0.48f, 1f);
+                string name = info != null && !string.IsNullOrEmpty(info.name) ? info.name : cell.Identifier;
+                cell.Label.text = unlocked ? name : $"{name}\nLocked";
             }
 
             if (isSelected && unlocked)
-                selectedView = view;
+                selectedCell = cell;
         }
 
-        UpdatePlayerMarker(selectedView);
+        UpdatePlayerMarker(selectedCell);
     }
 
-    void UpdatePlayerMarker(SceneButtonView selected)
+    void UpdatePlayerMarker(SceneCell selected)
     {
         if (playerMarker == null)
             return;

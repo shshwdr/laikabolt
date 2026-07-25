@@ -1,7 +1,9 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
-/// Plays a simple frame animation on a SpriteRenderer when frames are defined.
+/// Plays a simple frame animation when frames are defined.
+/// Prefers SpriteRenderer; falls back to UI Image.
 /// If no frames are assigned, does nothing.
 /// </summary>
 public class AnimPlayer : MonoBehaviour
@@ -12,6 +14,7 @@ public class AnimPlayer : MonoBehaviour
     [SerializeField] bool playOnEnable = true;
 
     SpriteRenderer _sr;
+    Image _image;
     int _index;
     float _timer;
     bool _playing;
@@ -22,7 +25,7 @@ public class AnimPlayer : MonoBehaviour
 
     void Awake()
     {
-        _sr = SpriteUtil.ResolveRenderer(gameObject, addIfMissing: false);
+        ResolveTarget();
     }
 
     void OnEnable()
@@ -41,13 +44,12 @@ public class AnimPlayer : MonoBehaviour
         if (!HasAnimation)
             return;
 
-        if (_sr == null)
-            _sr = SpriteUtil.ResolveRenderer(gameObject, addIfMissing: false);
-        if (_sr == null)
+        ResolveTarget();
+        if (!HasTarget)
             return;
 
         if (!_playing)
-            _original = _sr.sprite;
+            _original = GetSprite();
 
         _playing = true;
         _index = 0;
@@ -61,8 +63,8 @@ public class AnimPlayer : MonoBehaviour
             return;
 
         _playing = false;
-        if (_sr != null && _original != null)
-            _sr.sprite = _original;
+        if (_original != null)
+            SetSprite(_original);
     }
 
     void Update()
@@ -95,9 +97,45 @@ public class AnimPlayer : MonoBehaviour
 
     void ApplyFrame()
     {
-        if (_sr == null || frames == null || _index < 0 || _index >= frames.Length)
+        if (!HasTarget || frames == null || _index < 0 || _index >= frames.Length)
             return;
         if (frames[_index] != null)
-            _sr.sprite = frames[_index];
+            SetSprite(frames[_index]);
+    }
+
+    void ResolveTarget()
+    {
+        if (_sr == null)
+            _sr = SpriteUtil.ResolveRenderer(gameObject, addIfMissing: false);
+
+        if (_sr != null)
+        {
+            _image = null;
+            return;
+        }
+
+        if (_image == null)
+        {
+            _image = GetComponent<Image>();
+            if (_image == null)
+                _image = GetComponentInChildren<Image>(true);
+        }
+    }
+
+    bool HasTarget => _sr != null || _image != null;
+
+    Sprite GetSprite()
+    {
+        if (_sr != null)
+            return _sr.sprite;
+        return _image != null ? _image.sprite : null;
+    }
+
+    void SetSprite(Sprite sprite)
+    {
+        if (_sr != null)
+            _sr.sprite = sprite;
+        else if (_image != null)
+            _image.sprite = sprite;
     }
 }

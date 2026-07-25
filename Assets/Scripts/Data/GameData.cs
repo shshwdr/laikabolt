@@ -21,8 +21,10 @@ public class GameData : ScriptableObject
     public int jumpDistance = 0;
     [Tooltip("Wrap around map edges when moving off-bounds.")]
     public bool passBorder;
-    [Tooltip("Food items dropped when an enemy is killed.")]
-    public int enemyFoodDrop;
+    [Tooltip("Food items dropped when an enemy is killed (base; enemyFood upgrades add more).")]
+    public int enemyFoodDrop = 1;
+    [Tooltip("Percent chance to drop one extra food on kill (base 20%; enemyFoodChance upgrades add more).")]
+    public int enemyFoodChance = 20;
     [Tooltip("Bonus per deposited food: score = count * (1 + foodCollectAmount).")]
     public int foodCollectAmount;
     [Tooltip("Spawn collecting robot(s) at run start.")]

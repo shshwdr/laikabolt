@@ -24,6 +24,10 @@ public class GameManager : MonoBehaviour
 
     [Header("UI (assign in scene)")]
 
+    [SerializeField] TitleView titleView;
+
+    [SerializeField] StoryView storyView;
+
     [SerializeField] ExploreView exploreView;
 
     [SerializeField] GameOverView gameOverView;
@@ -75,6 +79,8 @@ public class GameManager : MonoBehaviour
     int _bossHitsNeeded = 3;
 
     int _bossMinDistance = 4;
+
+    Vector2Int _pendingStart;
 
 
 
@@ -162,13 +168,13 @@ public class GameManager : MonoBehaviour
 
 
 
+        EnsureTitleStoryViews();
+
         EnsureExploreView();
 
         EnsureUpgradePanel();
 
         EnsureCheatManager();
-
-        ApplyExploreMode();
 
 
 
@@ -178,7 +184,29 @@ public class GameManager : MonoBehaviour
 
 
 
-        BeginGame(start);
+        _pendingStart = start;
+
+
+
+        // Always start with story/explore hidden; reveal when the flow needs them.
+
+        HideStoryAndExplore();
+
+
+
+        if (titleView != null)
+
+            BeginTitleFlow();
+
+        else
+
+        {
+
+            ApplyExploreMode();
+
+            BeginGame(start);
+
+        }
 
     }
 
@@ -221,6 +249,118 @@ public class GameManager : MonoBehaviour
         if (parts.Length > 2 && int.TryParse(parts[2], out int dist))
 
             _bossMinDistance = Mathf.Max(1, dist);
+
+    }
+
+
+
+    void BeginTitleFlow()
+
+    {
+
+        if (upgradeRoot != null)
+
+            upgradeRoot.SetActive(false);
+
+
+
+        HideStoryAndExplore();
+
+
+
+        if (storyView != null)
+
+            storyView.Setup(OnStoryComplete);
+
+
+
+        titleView.Setup(OnTitleStartClicked);
+
+        titleView.Show();
+
+    }
+
+
+
+    void OnTitleStartClicked()
+
+    {
+
+        if (titleView != null)
+
+            titleView.Hide();
+
+
+
+        if (storyView != null)
+
+        {
+
+            storyView.gameObject.SetActive(true);
+
+            storyView.Play();
+
+        }
+
+        else
+
+            OnStoryComplete();
+
+    }
+
+
+
+    void OnStoryComplete()
+
+    {
+
+        if (storyView != null)
+
+            storyView.HideImmediate();
+
+
+
+        ApplyExploreMode();
+
+        BeginGame(_pendingStart);
+
+    }
+
+
+
+    void HideStoryAndExplore()
+
+    {
+
+        if (exploreRoot != null)
+
+            exploreRoot.SetActive(false);
+
+        if (exploreView != null && exploreView.gameObject != exploreRoot)
+
+            exploreView.gameObject.SetActive(false);
+
+
+
+        if (storyView != null)
+
+            storyView.HideImmediate();
+
+    }
+
+
+
+    void EnsureTitleStoryViews()
+
+    {
+
+        if (titleView == null)
+
+            titleView = FindObjectOfType<TitleView>(true);
+
+        if (storyView == null)
+
+            storyView = FindObjectOfType<StoryView>(true);
 
     }
 
@@ -448,7 +588,7 @@ public class GameManager : MonoBehaviour
 
             exploreView.Setup(EndGame, CurrentSceneId);
 
-            exploreView.SetScore(0);
+            exploreView.SetScore(0, immediate: true);
 
             exploreView.SetFoodProgress(0, FoodTarget);
 

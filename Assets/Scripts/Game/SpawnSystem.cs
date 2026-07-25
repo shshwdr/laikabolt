@@ -110,6 +110,10 @@ public class SpawnSystem : MonoBehaviour
     void DropFoodFromEnemy(Vector2Int origin)
     {
         int count = Mathf.Max(0, _data.enemyFoodDrop);
+        // Base chance (GameData) + enemyFoodChance upgrades: roll for +1 extra food.
+        if (_data.enemyFoodChance > 0 && Random.Range(0f, 100f) < _data.enemyFoodChance)
+            count += 1;
+
         if (count <= 0)
             return;
 

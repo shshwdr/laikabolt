@@ -76,6 +76,9 @@ public static class MetaSaveService
                 case "enemyFood":
                     config.enemyFoodDrop += info.value * level;
                     break;
+                case "enemyFoodChance":
+                    config.enemyFoodChance += info.value * level;
+                    break;
                 case "foodCollectAmount":
                     config.foodCollectAmount += info.value * level;
                     break;

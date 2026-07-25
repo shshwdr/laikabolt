@@ -11,6 +11,7 @@ public class ExploreView : MonoBehaviour
 {
     static readonly Color CarryNormal = Color.white;
     static readonly Color CarryFull = new Color(1f, 0.25f, 0.25f, 1f);
+    static readonly Color TimerUrgent = new Color(1f, 0.2f, 0.2f, 1f);
 
     [Header("Texts")]
     [SerializeField] TMP_Text timerText;
@@ -31,8 +32,28 @@ public class ExploreView : MonoBehaviour
     [Header("Scene Background")]
     [SerializeField] Image sceneBK;
 
+    [Header("Score Tick")]
+    [Tooltip("Seconds between each +1/-1 step while counting toward the target score.")]
+    [SerializeField] float scoreTickInterval = 0.03f;
+
+    [Header("Timer Punch (last 3s)")]
+    [SerializeField] float timerPunchDuration = 0.28f;
+    [SerializeField] float timerPunchBase = 0.18f;
+    [SerializeField] float timerPunchStep = 0.14f;
+    [SerializeField] int timerPunchVibrato = 6;
+    [SerializeField] float timerPunchElasticity = 0.55f;
+
     Action onEndGame;
     Tween _toastTween;
+    Tween _scoreTween;
+    Tween _timerPunchTween;
+
+    int _displayedScore;
+    int _targetScore;
+    int _lastTimerDisplay = int.MinValue;
+    Color _timerNormalColor = Color.white;
+    Vector3 _timerBaseScale = Vector3.one;
+    bool _timerVisualCached;
 
     public void Setup(Action endGameCallback, string sceneId = null)
     {
@@ -53,6 +74,10 @@ public class ExploreView : MonoBehaviour
             toastGroup.blocksRaycasts = false;
             toastGroup.interactable = false;
         }
+
+        CacheTimerVisuals();
+        ResetTimerVisual();
+        SetScore(0, immediate: true);
     }
 
     public void ApplySceneBackground(string sceneId)
@@ -74,14 +99,46 @@ public class ExploreView : MonoBehaviour
 
     public void SetTimer(float seconds)
     {
-        if (timerText != null)
-            timerText.text = Mathf.CeilToInt(Mathf.Max(0f, seconds)).ToString();
+        if (timerText == null)
+            return;
+
+        CacheTimerVisuals();
+
+        float clamped = Mathf.Max(0f, seconds);
+        int display = Mathf.CeilToInt(clamped);
+        bool changed = display != _lastTimerDisplay;
+
+        timerText.text = display.ToString();
+        timerText.color = display <= 5 ? TimerUrgent : _timerNormalColor;
+
+        if (changed && display > 0 && display <= 3)
+            PunchTimer(display);
+
+        _lastTimerDisplay = display;
     }
 
-    public void SetScore(int score)
+    public void SetScore(int score, bool immediate = false)
     {
-        if (scoreText != null)
-            scoreText.text = $"{score}";
+        if (scoreText == null)
+            return;
+
+        _targetScore = Mathf.Max(0, score);
+
+        if (immediate || scoreTickInterval <= 0f)
+        {
+            KillScoreTween();
+            _displayedScore = _targetScore;
+            scoreText.text = _displayedScore.ToString();
+            return;
+        }
+
+        if (_displayedScore == _targetScore)
+            return;
+
+        if (_scoreTween != null && _scoreTween.IsActive())
+            return;
+
+        StartScoreTick();
     }
 
     public void SetCarry(int carry, int maxCarry)
@@ -133,6 +190,91 @@ public class ExploreView : MonoBehaviour
             .SetLink(gameObject);
     }
 
+    void StartScoreTick()
+    {
+        KillScoreTween();
+        TickScoreOnce();
+    }
+
+    void TickScoreOnce()
+    {
+        if (_displayedScore == _targetScore)
+        {
+            _scoreTween = null;
+            return;
+        }
+
+        _displayedScore += _displayedScore < _targetScore ? 1 : -1;
+        if (scoreText != null)
+            scoreText.text = _displayedScore.ToString();
+
+        if (_displayedScore == _targetScore)
+        {
+            _scoreTween = null;
+            return;
+        }
+
+        float interval = Mathf.Max(0.001f, scoreTickInterval);
+        _scoreTween = DOVirtual.DelayedCall(interval, TickScoreOnce)
+            .SetLink(gameObject)
+            .SetUpdate(true);
+    }
+
+    void KillScoreTween()
+    {
+        if (_scoreTween != null && _scoreTween.IsActive())
+            _scoreTween.Kill();
+        _scoreTween = null;
+    }
+
+    void PunchTimer(int displaySeconds)
+    {
+        if (timerText == null)
+            return;
+
+        var t = timerText.transform;
+        if (_timerPunchTween != null && _timerPunchTween.IsActive())
+            _timerPunchTween.Kill(true);
+
+        t.localScale = _timerBaseScale;
+
+        // 3 -> smallest punch, 2 -> medium, 1 -> largest
+        float strength = timerPunchBase + timerPunchStep * (3 - displaySeconds);
+        _timerPunchTween = t
+            .DOPunchScale(Vector3.one * strength, timerPunchDuration, timerPunchVibrato, timerPunchElasticity)
+            .SetLink(gameObject)
+            .SetUpdate(true)
+            .OnKill(() =>
+            {
+                if (t != null)
+                    t.localScale = _timerBaseScale;
+            });
+    }
+
+    void CacheTimerVisuals()
+    {
+        if (_timerVisualCached || timerText == null)
+            return;
+
+        _timerNormalColor = timerText.color;
+        _timerBaseScale = timerText.transform.localScale;
+        _timerVisualCached = true;
+    }
+
+    void ResetTimerVisual()
+    {
+        _lastTimerDisplay = int.MinValue;
+        if (timerText == null)
+            return;
+
+        if (_timerPunchTween != null && _timerPunchTween.IsActive())
+            _timerPunchTween.Kill(true);
+        _timerPunchTween = null;
+
+        timerText.color = _timerNormalColor;
+        timerText.transform.localScale = _timerBaseScale;
+    }
+
     void OnEndGameClicked()
     {
         onEndGame?.Invoke();
@@ -142,5 +284,8 @@ public class ExploreView : MonoBehaviour
     {
         if (_toastTween != null && _toastTween.IsActive())
             _toastTween.Kill();
+        KillScoreTween();
+        if (_timerPunchTween != null && _timerPunchTween.IsActive())
+            _timerPunchTween.Kill();
     }
 }

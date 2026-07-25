@@ -7,6 +7,7 @@ using UnityEngine;
 /// </summary>
 public class DamageNumber : MonoBehaviour
 {
+    const string NumberFontPath = "fonts/NUMBERFONT SDF";
     const float FontSize = 4f;
     const float Duration = 0.55f;
     const float JumpPower = 0.55f;
@@ -14,6 +15,8 @@ public class DamageNumber : MonoBehaviour
     const float PeakScale = 1.35f;
 
     static readonly Color NumberColor = new Color(1f, 0.35f, 0.25f, 1f);
+
+    static TMP_FontAsset _numberFont;
 
     TextMeshPro _tmp;
 
@@ -25,11 +28,23 @@ public class DamageNumber : MonoBehaviour
         dn.Play(Mathf.Max(1, damage));
     }
 
+    static TMP_FontAsset ResolveFont()
+    {
+        if (_numberFont != null)
+            return _numberFont;
+
+        _numberFont = Resources.Load<TMP_FontAsset>(NumberFontPath);
+        if (_numberFont == null)
+            _numberFont = TMP_Settings.defaultFontAsset;
+        return _numberFont;
+    }
+
     void Play(int damage)
     {
         _tmp = gameObject.AddComponent<TextMeshPro>();
-        if (TMP_Settings.defaultFontAsset != null)
-            _tmp.font = TMP_Settings.defaultFontAsset;
+        var font = ResolveFont();
+        if (font != null)
+            _tmp.font = font;
         _tmp.text = damage.ToString();
         _tmp.fontSize = FontSize;
         _tmp.alignment = TextAlignmentOptions.Center;

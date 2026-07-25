@@ -17,6 +17,10 @@ PrefabInstance:
       value: pointDamagePre
       objectReference: {fileID: 0}
     - target: {fileID: 3589873236674472436, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3589873236674472436, guid: c34769144a0b7ea48a6e7293e55c174a, type: 3}
       propertyPath: frames.Array.size
       value: 3
       objectReference: {fileID: 0}

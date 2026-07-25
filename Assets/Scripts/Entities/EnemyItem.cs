@@ -11,6 +11,7 @@ public class EnemyItem : MonoBehaviour
     GridBoard _board;
     GameData _data;
     System.Action<Vector2Int> _onKilled;
+    EnemyHpBar _hpBar;
     bool _flying;
 
     public void Setup(
@@ -33,6 +34,11 @@ public class EnemyItem : MonoBehaviour
         MainGameObject.Fit(gameObject, _sr, data.cellSize);
 
         board.RegisterEnemy(cell, this);
+
+        _hpBar = GetComponent<EnemyHpBar>();
+        if (_hpBar == null)
+            _hpBar = gameObject.AddComponent<EnemyHpBar>();
+        _hpBar.Setup(HitsLeft);
     }
 
     /// <summary>Apply damage; returns true if the enemy died and flies away.</summary>
@@ -45,6 +51,7 @@ public class EnemyItem : MonoBehaviour
         transform.DOKill(false);
         transform.DOPunchScale(Vector3.one * 0.15f, 0.12f, 4, 0.5f);
         DamageNumber.Spawn(transform.position, applied);
+        _hpBar?.SetHp(Mathf.Max(0, HitsLeft));
 
         if (HitsLeft > 0)
             return false;
@@ -56,6 +63,7 @@ public class EnemyItem : MonoBehaviour
     void FlyAway(Vector2Int fromCell)
     {
         _flying = true;
+        _hpBar?.SetVisible(false);
         var dropCell = GridPos;
         _board.UnregisterEnemy(GridPos);
         _onKilled?.Invoke(dropCell);
