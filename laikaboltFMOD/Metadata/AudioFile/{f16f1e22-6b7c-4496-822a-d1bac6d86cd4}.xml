@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{f16f1e22-6b7c-4496-822a-d1bac6d86cd4}">
+		<property name="assetPath">
+			<value>sx_player_moveBlocked_01.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>96</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>0.20445833333333333</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{5f3b77b9-f4ec-4dde-b134-8632b8df7f3d}</destination>
+		</relationship>
+	</object>
+</objects>
