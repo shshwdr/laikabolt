@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{38a80519-e6f0-4256-a735-153615bc1fb3}">
+		<property name="assetPath">
+			<value>sx_env_storm_build_02.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>96</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>0.96363541666666663</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{5f3b77b9-f4ec-4dde-b134-8632b8df7f3d}</destination>
+		</relationship>
+	</object>
+</objects>

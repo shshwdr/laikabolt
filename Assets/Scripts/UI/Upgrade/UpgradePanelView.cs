@@ -80,6 +80,7 @@ public class UpgradePanelView : MonoBehaviour
 
     void OnStartNextRunClicked()
     {
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
         onStartNextRun?.Invoke();
     }
 
@@ -371,7 +372,8 @@ public class UpgradePanelView : MonoBehaviour
     {
         if (!MetaSaveService.TrySelectScene(metaSave, identifier))
             return;
-
+        //
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_planetSelect");
         NotifySceneSelected(identifier);
         RefreshSceneButtons();
     }
