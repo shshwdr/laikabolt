@@ -448,7 +448,7 @@ public class UpgradePanelView : MonoBehaviour
     public void RefreshAll()
     {
         if (goldText != null && metaSave != null)
-            goldText.text = $"Gold {metaSave.MetaGold}";
+            goldText.text = $"SCORE {metaSave.MetaGold}";
 
         foreach (var pair in nodeViews)
             RefreshUpgradeButton(pair.Value);

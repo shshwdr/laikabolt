@@ -688,8 +688,6 @@ public class PlayerController : MonoBehaviour
     void PlayJumpSfx()
     {
         RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_jump");
-        if (_game != null && _game.IsTimerUrgent)
-            RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_countdown");
     }
 
     void BeginActiveMove(Vector2Int destination)

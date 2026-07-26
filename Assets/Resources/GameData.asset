@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roundDuration: 10
   endlessBossBonusSeconds: 20
+  endlessFullIncrease: 5
   collectableSpawnInterval: 3
   enemySpawnInterval: 5
   initialCollectables: 3

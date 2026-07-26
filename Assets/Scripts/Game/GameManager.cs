@@ -44,6 +44,7 @@ public class GameManager : MonoBehaviour
     bool _hasCollectFlyBoss;
     int _bossHitsNeeded = 3;
     int _bossMinDistance = 4;
+    int _endlessBossesSpawned;
     Vector2Int _pendingStart;
     float _storyResumeTimeScale = 1f;
     bool _storyPausedTime;
@@ -515,6 +516,7 @@ public class GameManager : MonoBehaviour
         SceneCleared = false;
         BossPhaseActive = false;
         FoodProgress = 0;
+        _endlessBossesSpawned = 0;
         _spawn.SpawnInitial();
         if (exploreView != null)
             exploreView.SetTimer(_timeLeft);
@@ -637,14 +639,6 @@ public class GameManager : MonoBehaviour
             EndGameByTimeout();
     }
 
-    /// <summary>True while HUD timer is in the urgent red window (last 5 seconds).</summary>
-    public bool IsTimerUrgent =>
-        IsPlaying
-        && !IsStoryPlaying
-        && _timerStarted
-        && _timeLeft > 0f
-        && Mathf.CeilToInt(_timeLeft) <= 5;
-
     public bool IsLastMinuteActive =>
         IsPlaying
         && !IsStoryPlaying
@@ -735,9 +729,11 @@ public class GameManager : MonoBehaviour
         CompleteSceneClear();
     }
 
-    /// <summary>Endless: each full chunk of progress spawns a boss and subtracts FoodTarget.</summary>
+    /// <summary>Endless: each full chunk of progress spawns a boss and subtracts FoodTarget.
+    /// After each cycle, FoodTarget rises by endlessFullIncrease (resets to scene.full on re-enter).</summary>
     void TrySpawnEndlessBossesFromProgress()
     {
+        int fullIncrease = _runtimeData != null ? Mathf.Max(0, _runtimeData.endlessFullIncrease) : 5;
         while (FoodProgress >= FoodTarget)
         {
             // Wait out intro story before stacking more bosses from the same deposit.
@@ -748,6 +744,7 @@ public class GameManager : MonoBehaviour
                 break;
 
             FoodProgress -= FoodTarget;
+            FoodTarget += fullIncrease;
 
             if (IsStoryPlaying || _storyPausedTime)
                 break;
@@ -807,12 +804,19 @@ public class GameManager : MonoBehaviour
         if (exploreView != null)
             exploreView.ShowToast("Boss appeared!");
 
+        int hitsNeeded = _bossHitsNeeded;
+        if (IsEndlessScene)
+        {
+            hitsNeeded = _bossHitsNeeded + _endlessBossesSpawned;
+            _endlessBossesSpawned++;
+        }
+
         var go = PrefabUtil.Instantiate("prefab/boss", _board.EntityRoot, "BossCollectFly");
         PrefabUtil.EnsureAnimPlayer(go);
         var boss = go.GetComponent<BossCollectFly>();
         if (boss == null)
             boss = go.AddComponent<BossCollectFly>();
-        boss.Setup(_board, _runtimeData, this, _player, cell, _bossHitsNeeded, _bossMinDistance);
+        boss.Setup(_board, _runtimeData, this, _player, cell, hitsNeeded, _bossMinDistance);
     }
 
     void MarkBossStorySeen()

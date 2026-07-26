@@ -7,6 +7,8 @@ public class GameData : ScriptableObject
     public float roundDuration = 20f;
     [Tooltip("Endless mode: seconds added when a boss is deposited at the ship.")]
     public float endlessBossBonusSeconds = 20f;
+    [Tooltip("Endless mode: food target (full) increases by this after each completed progress cycle. Resets on re-enter.")]
+    public int endlessFullIncrease = 5;
 
     [Header("Spawn")]
     public float collectableSpawnInterval = 1f;

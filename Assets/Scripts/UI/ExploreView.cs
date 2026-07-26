@@ -153,6 +153,9 @@ public class ExploreView : MonoBehaviour
         if (!_timerDamageFlashActive && !_timerBonusFlashActive)
             timerText.color = display <= 5 ? TimerUrgent : _timerNormalColor;
 
+        if (changed && display > 0 && display <= 5)
+            RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_countdown");
+
         if (changed && display > 0 && display <= 3)
             PunchTimer(display);
 
