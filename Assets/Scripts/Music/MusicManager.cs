@@ -1,7 +1,14 @@
+using System;
+using System.Collections;
 using UnityEngine;
 using FMODUnity;
 using FMOD.Studio;
 
+/// <summary>
+/// Persistent gameplay music. Waits for FMOD banks before starting —
+/// required on WebGL where banks load asynchronously via UnityWebRequest
+/// (same pattern as littleGuys GameBootstrap).
+/// </summary>
 public class MusicManager : MonoBehaviour
 {
     public static MusicManager Instance { get; private set; }
@@ -9,11 +16,13 @@ public class MusicManager : MonoBehaviour
     [Header("Audio")]
     [SerializeField] private EventReference musicEvent;
 
-    private EventInstance _musicInstance;
+    EventInstance _musicInstance;
+    Coroutine _initRoutine;
+    float _pendingGameState;
+    bool _hasPendingGameState;
 
-    private void Awake()
+    void Awake()
     {
-        // Keep only one instance playing across scene reloads/transitions
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -23,34 +32,97 @@ public class MusicManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        InitMusic();
+        _initRoutine = StartCoroutine(InitMusicWhenReady());
     }
 
-    private void InitMusic()
+    IEnumerator InitMusicWhenReady()
     {
-        if (musicEvent.IsNull) return;
+        // WebGL loads banks asynchronously; CreateInstance in Awake is too early.
+        // SFX work later because they play after banks have finished loading.
+        while (!RuntimeManager.IsInitialized || !RuntimeManager.HaveAllBanksLoaded)
+            yield return null;
 
-        _musicInstance = RuntimeManager.CreateInstance(musicEvent);
-        _musicInstance.start();
+        TryStartMusic();
+        _initRoutine = null;
+    }
 
-        // Start in Upgrade mode (0)
-        SetGameState(0f);
+    void TryStartMusic()
+    {
+        if (musicEvent.IsNull)
+            return;
+
+        if (_musicInstance.isValid())
+        {
+            PLAYBACK_STATE state;
+            _musicInstance.getPlaybackState(out state);
+            if (state == PLAYBACK_STATE.PLAYING || state == PLAYBACK_STATE.STARTING)
+            {
+                ApplyPendingGameState();
+                return;
+            }
+
+            StopMusicInstance();
+        }
+
+        try
+        {
+            _musicInstance = RuntimeManager.CreateInstance(musicEvent);
+            _musicInstance.start();
+            ApplyPendingGameState();
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[FMOD] Failed to start music: {e.Message}");
+        }
     }
 
     public void SetGameState(float stateValue)
     {
-        if (_musicInstance.isValid())
+        _pendingGameState = stateValue;
+        _hasPendingGameState = true;
+
+        // Banks may still be loading, or the browser may have blocked autoplay
+        // until a user gesture — retry start when game flow requests a state.
+        if (!_musicInstance.isValid())
         {
-            _musicInstance.setParameterByName("Game State", stateValue);
+            if (RuntimeManager.IsInitialized && RuntimeManager.HaveAllBanksLoaded)
+                TryStartMusic();
+            return;
         }
+
+        _musicInstance.setParameterByName("Game State", stateValue);
     }
 
-    private void OnDestroy()
+    void ApplyPendingGameState()
     {
-        if (Instance == this && _musicInstance.isValid())
+        if (!_hasPendingGameState || !_musicInstance.isValid())
+            return;
+
+        _musicInstance.setParameterByName("Game State", _pendingGameState);
+    }
+
+    void StopMusicInstance()
+    {
+        if (!_musicInstance.isValid())
+            return;
+
+        _musicInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+        _musicInstance.release();
+        _musicInstance.clearHandle();
+    }
+
+    void OnDestroy()
+    {
+        if (_initRoutine != null)
         {
-            _musicInstance.stop(FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-            _musicInstance.release();
+            StopCoroutine(_initRoutine);
+            _initRoutine = null;
+        }
+
+        if (Instance == this)
+        {
+            StopMusicInstance();
+            Instance = null;
         }
     }
 }

@@ -628,10 +628,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1280, y: 720}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -1471,6 +1471,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   panel: {fileID: 711489695}
   startButton: {fileID: 1583819780}
+  startWipe: {fileID: 1482847296}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -2496,6 +2497,7 @@ RectTransform:
   - {fileID: 652583245}
   - {fileID: 1540946644}
   - {fileID: 1024732051}
+  - {fileID: 1317097315}
   - {fileID: 494130881}
   m_Father: {fileID: 500527809}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3476,7 +3478,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1024732051
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3488,13 +3490,12 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1317097315}
+  m_Children: []
   m_Father: {fileID: 711489696}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 30}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -345, y: -234}
+  m_AnchoredPosition: {x: -122, y: -105}
   m_SizeDelta: {x: 500, y: 1000}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1024732052
@@ -3628,10 +3629,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1280, y: 720}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -4141,16 +4142,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1317097314}
-  m_LocalRotation: {x: -0, y: -0, z: -0.2588191, w: 0.9659258}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.75, y: 0.75, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1024732051}
+  m_Father: {fileID: 711489696}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 448.68762, y: 11.149914}
+  m_AnchoredPosition: {x: 37.999878, y: -0.000019073486}
   m_SizeDelta: {x: 1280, y: 720}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1317097316
@@ -4354,6 +4355,10 @@ MonoBehaviour:
   timerPunchStep: 1.5
   timerPunchVibrato: 6
   timerPunchElasticity: 0.55
+  carryPunchDuration: 0.35
+  carryPunchStrength: 0.65
+  carryPunchVibrato: 8
+  carryPunchElasticity: 0.6
 --- !u!1 &1482847292
 GameObject:
   m_ObjectHideFlags: 0
@@ -4365,6 +4370,7 @@ GameObject:
   - component: {fileID: 1482847293}
   - component: {fileID: 1482847295}
   - component: {fileID: 1482847294}
+  - component: {fileID: 1482847296}
   m_Layer: 5
   m_Name: dog
   m_TagString: Untagged
@@ -4429,6 +4435,28 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1482847292}
   m_CullTransparentMesh: 1
+--- !u!114 &1482847296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1482847292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a4b5c6d7e8f901234567890abcdef12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fromImage: {fileID: 1482847294}
+  toImage: {fileID: 1317097316}
+  wipeMaterialTemplate: {fileID: 2100000, guid: 9b5c6d7e8f0123456789abcdef012345, type: 2}
+  duration: 2
+  ease: 4
+  softEdge: 0.045
+  glowColor: {r: 0.45882356, g: 0.53333336, b: 0.8941177, a: 1}
+  glowStrength: 0.1
+  angleDegrees: 27
+  useUnscaledTime: 1
 --- !u!1001 &1486999908
 PrefabInstance:
   m_ObjectHideFlags: 0
