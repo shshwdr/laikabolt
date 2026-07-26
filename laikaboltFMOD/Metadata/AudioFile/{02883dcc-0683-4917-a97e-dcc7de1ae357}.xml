@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{02883dcc-0683-4917-a97e-dcc7de1ae357}">
+		<property name="assetPath">
+			<value>sx_npc_ufo_capture_01.wav</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>96</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>0.96748958333333335</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{5f3b77b9-f4ec-4dde-b134-8632b8df7f3d}</destination>
+		</relationship>
+	</object>
+</objects>
