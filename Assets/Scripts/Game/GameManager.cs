@@ -379,8 +379,6 @@ public class GameManager : MonoBehaviour
     {
         IsPlaying = false;
 
-        if (MusicManager.Instance != null)
-            MusicManager.Instance.SetGameState(0f);
 
         if (_spawn != null)
             _spawn.Stop();
@@ -791,6 +789,8 @@ public class GameManager : MonoBehaviour
             return;
 
         ShowGameOverOrUpgrade();
+        if (MusicManager.Instance != null)
+            MusicManager.Instance.SetGameState(0f);
     }
 
     bool TryPlayClearOrOverStory()
