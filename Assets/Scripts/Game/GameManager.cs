@@ -300,6 +300,9 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        if (MusicManager.Instance != null)
+            MusicManager.Instance.SetGameState(0f);
+
         storyView.gameObject.SetActive(true);
         storyView.Play(resourcePath, showSkipHint, completeCallback, pageChangedCallback);
     }
@@ -522,8 +525,11 @@ public class GameManager : MonoBehaviour
 
     public void ShowFullToast()
     {
-        if (exploreView != null)
-            exploreView.ShowToast("Full!");
+        if (exploreView == null)
+            return;
+
+        exploreView.ShowToast("Full!");
+        exploreView.PunchCarryFull();
     }
 
     public void ShowBossCaughtToast()

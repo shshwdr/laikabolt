@@ -43,10 +43,17 @@ public class ExploreView : MonoBehaviour
     [SerializeField] int timerPunchVibrato = 6;
     [SerializeField] float timerPunchElasticity = 0.55f;
 
+    [Header("Carry Punch (full)")]
+    [SerializeField] float carryPunchDuration = 0.35f;
+    [SerializeField] float carryPunchStrength = 0.65f;
+    [SerializeField] int carryPunchVibrato = 8;
+    [SerializeField] float carryPunchElasticity = 0.6f;
+
     Action onEndGame;
     Tween _toastTween;
     Tween _scoreTween;
     Tween _timerPunchTween;
+    Tween _carryPunchTween;
 
     int _displayedScore;
     int _targetScore;
@@ -54,6 +61,8 @@ public class ExploreView : MonoBehaviour
     Color _timerNormalColor = Color.white;
     Vector3 _timerBaseScale = Vector3.one;
     bool _timerVisualCached;
+    Vector3 _carryBaseScale = Vector3.one;
+    bool _carryVisualCached;
 
     public void Setup(Action endGameCallback, string sceneId = null)
     {
@@ -76,6 +85,7 @@ public class ExploreView : MonoBehaviour
         }
 
         CacheTimerVisuals();
+        CacheCarryVisuals();
         ResetTimerVisual();
         SetScore(0, immediate: true);
     }
@@ -153,8 +163,32 @@ public class ExploreView : MonoBehaviour
         if (carryText == null)
             return;
 
+        CacheCarryVisuals();
         carryText.text = $"{carry}/{maxCarry}";
         carryText.color = carry >= maxCarry ? CarryFull : CarryNormal;
+    }
+
+    public void PunchCarryFull()
+    {
+        if (carryText == null)
+            return;
+
+        CacheCarryVisuals();
+
+        var t = carryText.transform;
+        if (_carryPunchTween != null && _carryPunchTween.IsActive())
+            _carryPunchTween.Kill(true);
+
+        t.localScale = _carryBaseScale;
+        _carryPunchTween = t
+            .DOPunchScale(Vector3.one * carryPunchStrength, carryPunchDuration, carryPunchVibrato, carryPunchElasticity)
+            .SetLink(gameObject)
+            .SetUpdate(true)
+            .OnKill(() =>
+            {
+                if (t != null)
+                    t.localScale = _carryBaseScale;
+            });
     }
 
     public void SetFoodProgress(int current, int target)
@@ -268,6 +302,15 @@ public class ExploreView : MonoBehaviour
         _timerVisualCached = true;
     }
 
+    void CacheCarryVisuals()
+    {
+        if (_carryVisualCached || carryText == null)
+            return;
+
+        _carryBaseScale = carryText.transform.localScale;
+        _carryVisualCached = true;
+    }
+
     void ResetTimerVisual()
     {
         _lastTimerDisplay = int.MinValue;
@@ -319,5 +362,7 @@ public class ExploreView : MonoBehaviour
         KillScoreTween();
         if (_timerPunchTween != null && _timerPunchTween.IsActive())
             _timerPunchTween.Kill();
+        if (_carryPunchTween != null && _carryPunchTween.IsActive())
+            _carryPunchTween.Kill();
     }
 }

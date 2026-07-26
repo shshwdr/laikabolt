@@ -236,12 +236,16 @@ public class PlayerController : MonoBehaviour
         }
 
         if (_board.Map.GetCell(target.x, target.y) != MapCellType.Blocked)
+        {
             FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_moveBlocked");
-        return;
+            return;
+        }
 
         if (!TryFindJumpLanding(dir, out var jumpLanding, out bool jumpWrapped))
+        {
             FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_moveBlocked");
-        return;
+            return;
+        }
 
         _game.NotifyPlayerActed();
         SetMoveDir(dir);
@@ -869,18 +873,6 @@ public class PlayerController : MonoBehaviour
     public void NotifyCarryFull()
     {
         _game.ShowFullToast();
-        ShakeFull();
-    }
-
-    void ShakeFull()
-    {
-        if (IsBusy)
-            return;
-
-        IsBusy = true;
-        transform.DOKill(false);
-        transform.DOShakePosition(0.18f, _data.cellSize * 0.12f, 18, 90f, false, true)
-            .OnComplete(() => { IsBusy = false; });
     }
 
     void Deposit()
