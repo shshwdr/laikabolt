@@ -1,3 +1,4 @@
+using FMODUnity;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
@@ -153,6 +154,7 @@ public class GameManager : MonoBehaviour
     void OnTitleStartClicked()
     {
         s_titleDone = true;
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
 
         if (titleView != null)
             titleView.Hide();
@@ -419,6 +421,7 @@ public class GameManager : MonoBehaviour
     void BeginGame(Vector2Int start)
     {
         Transform parent = GetExploreParent();
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_gameStart");
 
         var boardGo = new GameObject("Board");
         boardGo.transform.SetParent(parent, false);

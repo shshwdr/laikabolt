@@ -2,6 +2,7 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using FMODUnity;
 
 /// <summary>
 /// Scene-wired game over panel. Assign panel / continue button / score text in the Inspector.
@@ -37,6 +38,8 @@ public class GameOverView : MonoBehaviour
         }
 
         SetPanelActive(true);
+
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_gameEnd");
     }
 
     public void Hide()
@@ -54,6 +57,7 @@ public class GameOverView : MonoBehaviour
 
     void OnContinueClicked()
     {
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
         Hide();
         onContinue?.Invoke();
     }
