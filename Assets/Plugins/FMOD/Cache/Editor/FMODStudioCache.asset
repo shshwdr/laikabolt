@@ -15,10 +15,10 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639206646338777584
+  lastModified: 639206734268371831
   FileSizes:
   - Name: Desktop
-    Value: 1858
+    Value: 2340
   Exists: 1
 --- !u!114 &-6564238588479961289
 MonoBehaviour:
@@ -46,7 +46,61 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 963
+--- !u!114 &-5414541100324458669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Environment/sx_env_ice_spawn
+  m_EditorClassIdentifier: 
+  Path: event:/SFX/Environment/sx_env_ice_spawn
+  Guid:
+    Data1: -1643379488
+    Data2: 1257891742
+    Data3: -1585955668
+    Data4: 226091276
+  Banks:
+  - {fileID: -4651756832321925464}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 1161
+--- !u!114 &-5028711972515683276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/Environment/sx_env_ice_slip
+  m_EditorClassIdentifier: 
+  Path: event:/SFX/Environment/sx_env_ice_slip
+  Guid:
+    Data1: 697802053
+    Data2: 1101886378
+    Data3: -1714228558
+    Data4: -682236198
+  Banks:
+  - {fileID: -4651756832321925464}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 436
 --- !u!114 &-4739003301656357679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -74,6 +128,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 200
+--- !u!114 &-4695219959566579455
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/UX/sx_ui_countdown
+  m_EditorClassIdentifier: 
+  Path: event:/SFX/UX/sx_ui_countdown
+  Guid:
+    Data1: -1716841675
+    Data2: 1341637139
+    Data3: -2002038363
+    Data4: -1857820694
+  Banks:
+  - {fileID: -4651756832321925464}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 160
 --- !u!114 &-4651756832321925464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,10 +170,10 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639206646338767511
+  lastModified: 639206734268371831
   FileSizes:
   - Name: Desktop
-    Value: 1093056
+    Value: 1366144
   Exists: 1
 --- !u!114 &-4612136185173350314
 MonoBehaviour:
@@ -175,6 +256,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 390
+--- !u!114 &-3477166984251577654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/NPC/sx_npc_ufo_capture
+  m_EditorClassIdentifier: 
+  Path: event:/SFX/NPC/sx_npc_ufo_capture
+  Guid:
+    Data1: -56532649
+    Data2: 1251457440
+    Data3: 1476687236
+    Data4: -2096701227
+  Banks:
+  - {fileID: -4651756832321925464}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 967
 --- !u!114 &-2483601676386006242
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,7 +309,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 382
 --- !u!114 &-1772928997693742431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -228,7 +336,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 921
 --- !u!114 &-982114559458290575
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -320,13 +428,18 @@ MonoBehaviour:
   - {fileID: 9207566750453831248}
   - {fileID: -2483601676386006242}
   - {fileID: -122361262014043023}
+  - {fileID: -4695219959566579455}
+  - {fileID: -3477166984251577654}
+  - {fileID: -5028711972515683276}
+  - {fileID: -5414541100324458669}
+  - {fileID: 5207250471900999656}
   EditorParameters: []
   MasterBanks:
   - {fileID: -4651756832321925464}
   StringsBanks:
   - {fileID: -8696051253084561046}
   cacheVersion: 131860
-  cacheTime: 639206646338777584
+  cacheTime: 639206734268371831
   SerializableEventsDict:
   - key: event:/Music/mus_gameplay
     index: 0
@@ -370,6 +483,16 @@ MonoBehaviour:
     index: 19
   - key: event:/SFX/NPC/sx_npc_ufo_move
     index: 20
+  - key: event:/SFX/UX/sx_ui_countdown
+    index: 21
+  - key: event:/SFX/NPC/sx_npc_ufo_capture
+    index: 22
+  - key: event:/SFX/Environment/sx_env_ice_slip
+    index: 23
+  - key: event:/SFX/Environment/sx_env_ice_spawn
+    index: 24
+  - key: event:/SFX/UX/sx_ui_mainMenuStart
+    index: 25
 --- !u!114 &1314768490896853844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -451,7 +574,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 431
+  Length: 1020
 --- !u!114 &2588434212028866286
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -478,7 +601,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 1138
 --- !u!114 &2669440942959015527
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -505,7 +628,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 119
 --- !u!114 &2787631258992467054
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -532,7 +655,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 738
 --- !u!114 &2961489215708530671
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -559,7 +682,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 1080
 --- !u!114 &4472614456130129477
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -586,7 +709,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 160
 --- !u!114 &4657429394913789446
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -613,7 +736,34 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 1418
+--- !u!114 &5207250471900999656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/UX/sx_ui_mainMenuStart
+  m_EditorClassIdentifier: 
+  Path: event:/SFX/UX/sx_ui_mainMenuStart
+  Guid:
+    Data1: -1956070705
+    Data2: 1173410749
+    Data3: -1353797446
+    Data4: 1515701840
+  Banks:
+  - {fileID: -4651756832321925464}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 1418
 --- !u!114 &5438949041012786151
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -694,7 +844,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 204
 --- !u!114 &9207566750453831248
 MonoBehaviour:
   m_ObjectHideFlags: 0
