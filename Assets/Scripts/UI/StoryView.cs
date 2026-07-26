@@ -4,6 +4,7 @@ using System.Text;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 /// <summary>
 /// Reads a Resources/story/*.txt. Blank lines split pages; each page fades in,
@@ -15,6 +16,9 @@ public class StoryView : MonoBehaviour
     [SerializeField] GameObject panel;
     [SerializeField] CanvasGroup canvasGroup;
     [SerializeField] TMP_Text storyText;
+    [SerializeField] Image storyImage;
+    [Tooltip("Parent of named RectTransforms (e.g. start1). Missing names keep the previous layout.")]
+    [SerializeField] Transform textPositions;
     [SerializeField] GameObject skipHint;
     [SerializeField] float fadeDuration = 0.45f;
     [Header("Page Reveal")]
@@ -30,6 +34,7 @@ public class StoryView : MonoBehaviour
     bool _playing;
     bool _finished;
     Tween _tween;
+    string _storyKey;
 
     public bool IsPlaying => _playing;
 
@@ -58,6 +63,7 @@ public class StoryView : MonoBehaviour
         _playing = false;
         onComplete = completeCallback;
         onPageChanged = pageChangedCallback;
+        _storyKey = ExtractStoryKey(resourcePath);
         SetPageRevealVisible(false);
 
         if (skipHint != null)
@@ -153,6 +159,8 @@ public class StoryView : MonoBehaviour
         _listening = false;
         onPageChanged?.Invoke(index);
 
+        ApplyPageVisuals(index);
+
         if (storyText != null)
         {
             storyText.text = _pages[index];
@@ -200,6 +208,76 @@ public class StoryView : MonoBehaviour
                 if (!_finished)
                     ShowPage(index);
             });
+    }
+
+    void ApplyPageVisuals(int index)
+    {
+        string pageKey = BuildPageKey(index);
+
+        if (storyImage != null && !string.IsNullOrEmpty(pageKey))
+        {
+            var sprite = Resources.Load<Sprite>("storyImage/" + pageKey);
+            if (sprite != null)
+                storyImage.sprite = sprite;
+        }
+
+        ApplyTextPosition(pageKey);
+    }
+
+    void ApplyTextPosition(string pageKey)
+    {
+        if (storyText == null || textPositions == null || string.IsNullOrEmpty(pageKey))
+            return;
+
+        var target = FindNamedRect(pageKey);
+        if (target == null)
+            return;
+
+        CopyRectTransform(target, storyText.rectTransform);
+    }
+
+    RectTransform FindNamedRect(string name)
+    {
+        if (textPositions == null || string.IsNullOrEmpty(name))
+            return null;
+
+        for (int i = 0; i < textPositions.childCount; i++)
+        {
+            var child = textPositions.GetChild(i) as RectTransform;
+            if (child != null && child.name == name)
+                return child;
+        }
+
+        return null;
+    }
+
+    static void CopyRectTransform(RectTransform source, RectTransform dest)
+    {
+        dest.anchorMin = source.anchorMin;
+        dest.anchorMax = source.anchorMax;
+        dest.pivot = source.pivot;
+        dest.anchoredPosition = source.anchoredPosition;
+        dest.sizeDelta = source.sizeDelta;
+        dest.localRotation = source.localRotation;
+        dest.localScale = source.localScale;
+    }
+
+    string BuildPageKey(int index)
+    {
+        if (string.IsNullOrEmpty(_storyKey))
+            return null;
+        return _storyKey + (index + 1);
+    }
+
+    static string ExtractStoryKey(string resourcePath)
+    {
+        if (string.IsNullOrEmpty(resourcePath))
+            return null;
+
+        int slash = resourcePath.LastIndexOf('/');
+        return slash >= 0 && slash < resourcePath.Length - 1
+            ? resourcePath.Substring(slash + 1)
+            : resourcePath;
     }
 
     void Finish()

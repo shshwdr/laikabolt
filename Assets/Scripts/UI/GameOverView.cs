@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class GameOverView : MonoBehaviour
 {
     [SerializeField] GameObject panel;
+    [SerializeField] Image panelImage;
     [SerializeField] Button continueButton;
     [SerializeField] TMP_Text scoreText;
 
@@ -36,12 +37,27 @@ public class GameOverView : MonoBehaviour
                 : $"Time's up!\nCollected: {score}";
         }
 
+        ApplyPanelImage(cleared);
         SetPanelActive(true);
     }
 
     public void Hide()
     {
         SetPanelActive(false);
+    }
+
+    void ApplyPanelImage(bool cleared)
+    {
+        var image = panelImage;
+        if (image == null && panel != null)
+            image = panel.GetComponent<Image>();
+        if (image == null)
+            return;
+
+        string key = cleared ? "clear1" : "over1";
+        var sprite = Resources.Load<Sprite>("storyImage/" + key);
+        if (sprite != null)
+            image.sprite = sprite;
     }
 
     void SetPanelActive(bool active)
