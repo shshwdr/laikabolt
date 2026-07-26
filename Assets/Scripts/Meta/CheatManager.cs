@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,6 +15,9 @@ public class CheatManager : MonoBehaviour
         "G: Add 10 global gold\n" +
         "F: Deposit 10 food into the hole\n" +
         "U: Unlock all scenes\n" +
+#if UNITY_EDITOR
+        "B: Take screenshot (Editor only)\n" +
+#endif
         "C: Show this cheat help";
 
     GameManager _game;
@@ -27,6 +32,11 @@ public class CheatManager : MonoBehaviour
 
     void Update()
     {
+#if UNITY_EDITOR
+        if (Input.GetKeyDown(KeyCode.B))
+            TakeEditorScreenshot();
+#endif
+
         if (_game != null && _game.IsStoryPlaying)
             return;
 
@@ -49,6 +59,19 @@ public class CheatManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.C))
             ShowToast(CheatHelpText, CheatHelpHoldSeconds);
     }
+
+#if UNITY_EDITOR
+    void TakeEditorScreenshot()
+    {
+        var dir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Screenshots"));
+        Directory.CreateDirectory(dir);
+        var fileName = $"screenshot_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+        var path = Path.Combine(dir, fileName);
+        ScreenCapture.CaptureScreenshot(path);
+        Debug.Log($"[CheatManager] Screenshot saved: {path}");
+        ShowToast($"Screenshot saved:\n{fileName}", 2f);
+    }
+#endif
 
     void AddGold(int amount)
     {

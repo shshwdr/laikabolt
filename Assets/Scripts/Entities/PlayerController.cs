@@ -287,8 +287,8 @@ public class PlayerController : MonoBehaviour
             if (_board.TryGetRobot(cell, out var robot))
                 robot.OfferToPlayer(this);
 
-            if (_board.HasBoss(cell) && _board.Boss != null)
-                _board.Boss.TryTouch(this, requirePlayerOnCell: false);
+            if (_board.TryGetBoss(cell, out var boss))
+                boss.TryTouch(this, requirePlayerOnCell: false);
         }
 
         IsBusy = true;
@@ -621,7 +621,7 @@ public class PlayerController : MonoBehaviour
     {
         IsBusy = true;
         BeginActiveMove(target);
-        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_jump");
+        PlayJumpSfx();
         Vector3 world = _board.CellToWorld(target);
         float duration = Mathf.Max(0.01f, _data.jumpDuration * durationScale);
         transform.DOKill();
@@ -664,7 +664,7 @@ public class PlayerController : MonoBehaviour
     {
         IsBusy = true;
         BeginActiveMove(target);
-        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_jump");
+        PlayJumpSfx();
         Vector3 worldDir = DirToWorld(dir);
         Vector3 exit = transform.position + worldDir * (_data.cellSize * 0.55f);
         Vector3 end = _board.CellToWorld(target);
@@ -683,6 +683,13 @@ public class PlayerController : MonoBehaviour
             ClearActiveMove();
             AfterArrive();
         });
+    }
+
+    void PlayJumpSfx()
+    {
+        RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_jump");
+        if (_game != null && _game.IsTimerUrgent)
+            RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_countdown");
     }
 
     void BeginActiveMove(Vector2Int destination)
@@ -961,7 +968,7 @@ public class PlayerController : MonoBehaviour
     {
         IsBusy = true;
         ClearActiveMove();
-        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/Player/sx_player_jump");
+        PlayJumpSfx();
         Vector3 origin = transform.position;
         Vector3 bump = _board.CellToWorld(enemyCell);
         Vector2Int fromCell = GridPos;

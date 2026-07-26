@@ -5,6 +5,8 @@ public class GameData : ScriptableObject
 {
     [Header("Round")]
     public float roundDuration = 20f;
+    [Tooltip("Endless mode: seconds added when a boss is deposited at the ship.")]
+    public float endlessBossBonusSeconds = 20f;
 
     [Header("Spawn")]
     public float collectableSpawnInterval = 1f;

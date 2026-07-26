@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using DG.Tweening;
+using FMODUnity;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -141,6 +142,8 @@ public class StoryView : MonoBehaviour
     {
         if (_busy || _finished)
             return;
+
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
 
         int next = _pageIndex + 1;
         if (next < _pages.Count)

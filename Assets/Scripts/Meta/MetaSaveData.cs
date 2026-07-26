@@ -27,6 +27,8 @@ public class MetaSaveData
     public bool HasSeenClearStory;
     /// <summary>Player has finished the first boss-encounter story.</summary>
     public bool HasSeenBossStory;
+    /// <summary>Player has finished (or skipped) the endless-mode intro story.</summary>
+    public bool HasSeenEndlessStory;
     /// <summary>Main start tutorial has been completed.</summary>
     public bool TutorialCompleted;
     /// <summary>Tutorial groups marked finished via tutorial.csv finishGroup.</summary>

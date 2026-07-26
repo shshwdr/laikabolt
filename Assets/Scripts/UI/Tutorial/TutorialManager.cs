@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using FMODUnity;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -141,7 +142,10 @@ public class TutorialManager : MonoBehaviour
         {
             // No EventSystem: still allow click-to-advance when not requiring a UI target.
             if (!requireHighlightTargetClick)
+            {
+                RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
                 waitingForClick = false;
+            }
             return;
         }
 
@@ -150,12 +154,14 @@ public class TutorialManager : MonoBehaviour
             if (!TryGetTopHitUnderClickTarget(results, out var hitObject))
                 return;
 
+            RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
             PropagatePointerClick(hitObject);
             CaptureResumeTimeScaleFromCurrent();
             waitingForClick = false;
             return;
         }
 
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
         PropagateTopRaycastClick(results);
         CaptureResumeTimeScaleFromCurrent();
         waitingForClick = false;

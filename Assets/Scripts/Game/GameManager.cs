@@ -34,7 +34,6 @@ public class GameManager : MonoBehaviour
     PlayerController _player;
     SpawnSystem _spawn;
     SceneSpecialSystem _specials;
-    BossCollectFly _boss;
     UpgradePanelView _upgradePanel;
     GameData _runtimeData;
     MetaSaveData _metaSave;
@@ -48,6 +47,9 @@ public class GameManager : MonoBehaviour
     Vector2Int _pendingStart;
     float _storyResumeTimeScale = 1f;
     bool _storyPausedTime;
+
+    /// <summary>Extra endless stage (scene id 3). Does not affect end-story unlock.</summary>
+    bool IsEndlessScene => CurrentSceneId == "3";
 
     public void Configure(MapData map, GameData data)
     {
@@ -154,7 +156,6 @@ public class GameManager : MonoBehaviour
     void OnTitleStartClicked()
     {
         s_titleDone = true;
-        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
 
         if (titleView != null)
             titleView.Hide();
@@ -174,6 +175,17 @@ public class GameManager : MonoBehaviour
         if (storyView != null)
             storyView.HideImmediate();
 
+        if (ShouldPlayEndlessStory())
+        {
+            PlayEndlessStory();
+            return;
+        }
+
+        EnterExploreGameplay(start);
+    }
+
+    void EnterExploreGameplay(Vector2Int start)
+    {
         if (MusicManager.Instance != null)
             MusicManager.Instance.SetGameState(1f);
 
@@ -206,11 +218,10 @@ public class GameManager : MonoBehaviour
         if (storyView != null)
             storyView.HideImmediate();
 
-        if (MusicManager.Instance != null)
-            MusicManager.Instance.SetGameState(1f);
-
-        ApplyExploreMode();
-        BeginGame(_pendingStart);
+        if (ShouldPlayEndlessStory())
+            PlayEndlessStory();
+        else
+            EnterExploreGameplay(_pendingStart);
     }
 
     void MarkStartStorySeen()
@@ -274,6 +285,49 @@ public class GameManager : MonoBehaviour
 
         if (MusicManager.Instance != null)
             MusicManager.Instance.SetGameState(0f);
+    }
+
+    bool ShouldPlayEndlessStory()
+    {
+        if (!IsEndlessScene)
+            return false;
+        var save = MetaSaveService.Load();
+        return save != null && !save.HasSeenEndlessStory;
+    }
+
+    void PlayEndlessStory()
+    {
+        if (upgradeRoot != null)
+            upgradeRoot.SetActive(false);
+
+        if (storyView == null)
+        {
+            MarkEndlessStorySeen();
+            EnterExploreGameplay(_pendingStart);
+            return;
+        }
+
+        PlayStory("story/endless", false, OnEndlessStoryComplete);
+    }
+
+    void OnEndlessStoryComplete()
+    {
+        MarkEndlessStorySeen();
+
+        if (storyView != null)
+            storyView.HideImmediate();
+
+        EnterExploreGameplay(_pendingStart);
+    }
+
+    void MarkEndlessStorySeen()
+    {
+        var save = MetaSaveService.Load();
+        if (save == null || save.HasSeenEndlessStory)
+            return;
+        save.HasSeenEndlessStory = true;
+        MetaSaveService.Save(save);
+        _metaSave = save;
     }
 
     void HideExploreView()
@@ -461,7 +515,6 @@ public class GameManager : MonoBehaviour
         SceneCleared = false;
         BossPhaseActive = false;
         FoodProgress = 0;
-        _boss = null;
         _spawn.SpawnInitial();
         if (exploreView != null)
             exploreView.SetTimer(_timeLeft);
@@ -572,7 +625,10 @@ public class GameManager : MonoBehaviour
 
         _timeLeft -= seconds;
         if (exploreView != null)
+        {
             exploreView.SetTimer(_timeLeft);
+            exploreView.FlashTimerDamage();
+        }
 
         if (_player != null)
             DamageNumber.Spawn(_player.transform.position, Mathf.Max(1, Mathf.RoundToInt(seconds)));
@@ -580,6 +636,14 @@ public class GameManager : MonoBehaviour
         if (_timeLeft <= 0f)
             EndGameByTimeout();
     }
+
+    /// <summary>True while HUD timer is in the urgent red window (last 5 seconds).</summary>
+    public bool IsTimerUrgent =>
+        IsPlaying
+        && !IsStoryPlaying
+        && _timerStarted
+        && _timeLeft > 0f
+        && Mathf.CeilToInt(_timeLeft) <= 5;
 
     public bool IsLastMinuteActive =>
         IsPlaying
@@ -644,6 +708,15 @@ public class GameManager : MonoBehaviour
         if (!IsPlaying || SceneCleared || amount <= 0)
             return;
 
+        if (IsEndlessScene && _hasCollectFlyBoss)
+        {
+            FoodProgress += amount;
+            TrySpawnEndlessBossesFromProgress();
+            if (exploreView != null)
+                exploreView.SetFoodProgress(FoodProgress, FoodTarget);
+            return;
+        }
+
         FoodProgress = Mathf.Min(FoodTarget, FoodProgress + amount);
         if (exploreView != null)
             exploreView.SetFoodProgress(FoodProgress, FoodTarget);
@@ -662,17 +735,42 @@ public class GameManager : MonoBehaviour
         CompleteSceneClear();
     }
 
+    /// <summary>Endless: each full chunk of progress spawns a boss and subtracts FoodTarget.</summary>
+    void TrySpawnEndlessBossesFromProgress()
+    {
+        while (FoodProgress >= FoodTarget)
+        {
+            // Wait out intro story before stacking more bosses from the same deposit.
+            if (IsStoryPlaying || _storyPausedTime)
+                break;
+
+            if (!TryBeginBossSpawn())
+                break;
+
+            FoodProgress -= FoodTarget;
+
+            if (IsStoryPlaying || _storyPausedTime)
+                break;
+        }
+    }
+
     void BeginBossPhase()
     {
-        BossPhaseActive = true;
+        if (!TryBeginBossSpawn())
+            CompleteSceneClear();
+    }
 
+    /// <summary>Picks a cell and starts boss spawn (or boss intro story). Returns false if no cell.</summary>
+    bool TryBeginBossSpawn()
+    {
         Vector2Int from = _player != null ? _player.GridPos : Vector2Int.zero;
         if (!BossCollectFly.TryPickSpawnCell(_board, from, _bossMinDistance, out var cell))
         {
             Debug.LogWarning("[GameManager] No cell for collectFly boss.");
-            CompleteSceneClear();
-            return;
+            return false;
         }
+
+        BossPhaseActive = true;
 
         var save = MetaSaveService.Load();
         bool firstBoss = save != null && !save.HasSeenBossStory;
@@ -680,10 +778,11 @@ public class GameManager : MonoBehaviour
         {
             PauseTimeForStory();
             PlayStory("story/boss", false, () => OnBossStoryComplete(cell));
-            return;
+            return true;
         }
 
         SpawnCollectFlyBoss(cell);
+        return true;
     }
 
     void OnBossStoryComplete(Vector2Int cell)
@@ -694,6 +793,13 @@ public class GameManager : MonoBehaviour
             storyView.HideImmediate();
         ApplyExploreMode();
         SpawnCollectFlyBoss(cell);
+
+        if (IsEndlessScene && IsPlaying)
+        {
+            TrySpawnEndlessBossesFromProgress();
+            if (exploreView != null)
+                exploreView.SetFoodProgress(FoodProgress, FoodTarget);
+        }
     }
 
     void SpawnCollectFlyBoss(Vector2Int cell)
@@ -703,10 +809,10 @@ public class GameManager : MonoBehaviour
 
         var go = PrefabUtil.Instantiate("prefab/boss", _board.EntityRoot, "BossCollectFly");
         PrefabUtil.EnsureAnimPlayer(go);
-        _boss = go.GetComponent<BossCollectFly>();
-        if (_boss == null)
-            _boss = go.AddComponent<BossCollectFly>();
-        _boss.Setup(_board, _runtimeData, this, _player, cell, _bossHitsNeeded, _bossMinDistance);
+        var boss = go.GetComponent<BossCollectFly>();
+        if (boss == null)
+            boss = go.AddComponent<BossCollectFly>();
+        boss.Setup(_board, _runtimeData, this, _player, cell, _bossHitsNeeded, _bossMinDistance);
     }
 
     void MarkBossStorySeen()
@@ -738,14 +844,14 @@ public class GameManager : MonoBehaviour
 
     public bool TryTouchBoss(PlayerController player)
     {
-        if (!BossPhaseActive || _boss == null || player == null)
+        if (!BossPhaseActive || player == null || _board == null)
             return false;
-        if (_boss.IsCaught || _boss.IsFlying)
+        if (!_board.TryGetBoss(player.GridPos, out var boss))
             return false;
-        if (_boss.GridPos != player.GridPos)
+        if (boss.IsCaught || boss.IsFlying)
             return false;
 
-        return _boss.TryTouch(player);
+        return boss.TryTouch(player);
     }
 
     public void NotifyBossDeposited()
@@ -753,8 +859,27 @@ public class GameManager : MonoBehaviour
         if (!IsPlaying || SceneCleared)
             return;
 
-        _boss = null;
+        if (IsEndlessScene)
+        {
+            AddEndlessBossBonusTime();
+            return;
+        }
+
         CompleteSceneClear();
+    }
+
+    void AddEndlessBossBonusTime()
+    {
+        float bonus = _runtimeData != null ? Mathf.Max(0f, _runtimeData.endlessBossBonusSeconds) : 20f;
+        if (bonus <= 0f)
+            return;
+
+        _timeLeft += bonus;
+        if (exploreView != null)
+        {
+            exploreView.SetTimer(_timeLeft);
+            exploreView.FlashTimerBonus();
+        }
     }
 
     void CompleteSceneClear()

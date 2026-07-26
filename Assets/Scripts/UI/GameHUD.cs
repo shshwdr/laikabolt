@@ -103,7 +103,11 @@ public class GameHUD : MonoBehaviour
 
         var button = go.AddComponent<Button>();
         button.targetGraphic = image;
-        button.onClick.AddListener(() => onEndGame.Invoke());
+        button.onClick.AddListener(() =>
+        {
+            FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
+            onEndGame.Invoke();
+        });
 
         var labelGo = new GameObject("Label");
         labelGo.transform.SetParent(go.transform, false);

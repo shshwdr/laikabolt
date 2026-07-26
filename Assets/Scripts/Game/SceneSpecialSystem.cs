@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FMODUnity;
 using UnityEngine;
 
 /// <summary>
@@ -185,6 +186,7 @@ public class SceneSpecialSystem : MonoBehaviour
             {
                 h.Phase = HazardPhase.Active;
                 h.PhaseLeft = _special.ActiveTime;
+                PlayStormBuildSfx();
                 RefreshHazardVisuals(h);
                 ApplyDangerTint(h);
                 ApplyHazardIfPlayerStanding(h);
@@ -230,6 +232,7 @@ public class SceneSpecialSystem : MonoBehaviour
         MarkOccupied(h, true);
         _hazards.Add(h);
         RefreshHazardVisuals(h);
+        PlayHazardSpawnSfx(h);
         if (h.Phase == HazardPhase.Active)
         {
             ApplyDangerTint(h);
@@ -258,6 +261,7 @@ public class SceneSpecialSystem : MonoBehaviour
         MarkOccupied(h, true);
         _hazards.Add(h);
         RefreshHazardVisuals(h);
+        PlayHazardSpawnSfx(h);
         if (h.Phase == HazardPhase.Active)
         {
             ApplyDangerTint(h);
@@ -584,13 +588,34 @@ public class SceneSpecialSystem : MonoBehaviour
     {
         if (h.Kind == SpecialKind.PointDamage || h.Kind == SpecialKind.LineDamage)
         {
+            PlayStormDamageSfx();
             _game.ApplyTimeDamage(h.LossTime);
             return;
         }
 
         if (h.Kind == SpecialKind.PointDamage2 && _player != null)
+        {
+            PlayStormDamageSfx();
             _player.DropAllCarriedFood();
+        }
     }
+
+    static void PlayHazardSpawnSfx(ActiveHazard h)
+    {
+        if (!IsDamageKind(h.Kind))
+            return;
+
+        if (h.Phase == HazardPhase.Warning)
+            RuntimeManager.PlayOneShot("event:/SFX/Environment/sx_env_storm");
+        else if (h.Phase == HazardPhase.Active)
+            PlayStormBuildSfx();
+    }
+
+    static void PlayStormBuildSfx() =>
+        RuntimeManager.PlayOneShot("event:/SFX/Environment/sx_env_storm_build");
+
+    static void PlayStormDamageSfx() =>
+        RuntimeManager.PlayOneShot("event:/SFX/Environment/sx_env_storm_damage");
 
     public void OnPlayerArrived(Vector2Int cell)
     {

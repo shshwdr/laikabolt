@@ -1,4 +1,5 @@
 using System;
+using FMODUnity;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -60,6 +61,8 @@ public class TitleView : MonoBehaviour
         if (_starting)
             return;
         _starting = true;
+
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
 
         if (startButton != null)
             startButton.interactable = false;

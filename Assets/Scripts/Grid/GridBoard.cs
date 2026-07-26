@@ -15,14 +15,14 @@ public class GridBoard : MonoBehaviour
     readonly Dictionary<Vector2Int, int> _hazardTintRefs = new Dictionary<Vector2Int, int>();
     readonly HashSet<Vector2Int> _hazardOccupied = new HashSet<Vector2Int>();
     readonly List<CollectRobot> _robots = new List<CollectRobot>();
-    BossCollectFly _boss;
+    readonly List<BossCollectFly> _bosses = new List<BossCollectFly>();
 
     Transform _tileRoot;
     Transform _entityRoot;
 
     public Transform EntityRoot => _entityRoot;
     public IReadOnlyList<CollectRobot> Robots => _robots;
-    public BossCollectFly Boss => _boss;
+    public BossCollectFly Boss => _bosses.Count > 0 ? _bosses[0] : null;
 
     public void Init(MapData map, GameData data)
     {
@@ -292,16 +292,37 @@ public class GridBoard : MonoBehaviour
         }
     }
 
-    public void RegisterBoss(BossCollectFly boss) => _boss = boss;
+    public void RegisterBoss(BossCollectFly boss)
+    {
+        if (boss == null || _bosses.Contains(boss))
+            return;
+        _bosses.Add(boss);
+    }
 
     public void UnregisterBoss(BossCollectFly boss)
     {
-        if (_boss == boss)
-            _boss = null;
+        if (boss != null)
+            _bosses.Remove(boss);
     }
 
-    public bool HasBoss(Vector2Int cell) =>
-        _boss != null && !_boss.IsCaught && _boss.GridPos == cell;
+    public bool HasBoss(Vector2Int cell) => TryGetBoss(cell, out _);
+
+    public bool TryGetBoss(Vector2Int cell, out BossCollectFly boss)
+    {
+        for (int i = 0; i < _bosses.Count; i++)
+        {
+            var b = _bosses[i];
+            if (b == null || b.IsCaught)
+                continue;
+            if (b.GridPos != cell)
+                continue;
+            boss = b;
+            return true;
+        }
+
+        boss = null;
+        return false;
+    }
 
     public void GetSpawnCandidates(List<Vector2Int> buffer, Vector2Int? playerCell)
     {

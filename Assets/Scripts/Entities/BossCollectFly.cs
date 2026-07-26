@@ -74,6 +74,13 @@ public class BossCollectFly : MonoBehaviour
         _hits++;
         if (_hits >= _hitsNeeded)
         {
+            // Player can only carry one boss at a time.
+            if (player.HasBoss)
+            {
+                Flee();
+                return false;
+            }
+
             Catch(player);
             return true;
         }
@@ -88,6 +95,8 @@ public class BossCollectFly : MonoBehaviour
         transform.DOKill();
         if (_board != null)
             _board.UnregisterBoss(this);
+
+        FMODUnity.RuntimeManager.PlayOneShot("event:/SFX/NPC/sx_npc_ufo_capture");
         player.ReceiveBoss(this);
     }
 
@@ -149,7 +158,7 @@ public class BossCollectFly : MonoBehaviour
             return true;
         if (_board.Map.IsStart(c.x, c.y))
             return true;
-        if (_board.HasFood(c) || _board.HasEnemy(c) || _board.HasHazard(c))
+        if (_board.HasFood(c) || _board.HasEnemy(c) || _board.HasHazard(c) || _board.HasBoss(c))
             return true;
         return false;
     }
@@ -219,7 +228,7 @@ public class BossCollectFly : MonoBehaviour
                     continue;
                 if (board.Map.IsStart(col, row))
                     continue;
-                if (board.HasFood(c) || board.HasEnemy(c) || board.HasRobot(c) || board.HasHazard(c))
+                if (board.HasFood(c) || board.HasEnemy(c) || board.HasRobot(c) || board.HasHazard(c) || board.HasBoss(c))
                     continue;
 
                 int dist = Mathf.Abs(c.x - from.x) + Mathf.Abs(c.y - from.y);

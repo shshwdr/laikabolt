@@ -1,5 +1,6 @@
 using System;
 using DG.Tweening;
+using FMODUnity;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,7 @@ public class ExploreView : MonoBehaviour
     static readonly Color CarryNormal = Color.white;
     static readonly Color CarryFull = new Color(1f, 0.25f, 0.25f, 1f);
     static readonly Color TimerUrgent = new Color(1f, 0.2f, 0.2f, 1f);
+    static readonly Color TimerBonus = new Color(0.25f, 0.95f, 0.4f, 1f);
 
     [Header("Texts")]
     [SerializeField] TMP_Text timerText;
@@ -43,6 +45,21 @@ public class ExploreView : MonoBehaviour
     [SerializeField] int timerPunchVibrato = 6;
     [SerializeField] float timerPunchElasticity = 0.55f;
 
+    [Header("Timer Damage Feedback")]
+    [SerializeField] float timerDamageFlashDuration = 0.4f;
+    [SerializeField] Vector2 timerDamagePunch = new Vector2(14f, 10f);
+    [SerializeField] float timerDamagePunchDuration = 0.35f;
+    [SerializeField] int timerDamagePunchVibrato = 14;
+    [SerializeField] float timerDamagePunchElasticity = 0.7f;
+    [SerializeField] float timerDamagePunchScale = 0.22f;
+
+    [Header("Timer Bonus Feedback")]
+    [SerializeField] float timerBonusFlashDuration = 0.55f;
+    [SerializeField] float timerBonusPunchScale = 0.45f;
+    [SerializeField] float timerBonusPunchDuration = 0.4f;
+    [SerializeField] int timerBonusPunchVibrato = 8;
+    [SerializeField] float timerBonusPunchElasticity = 0.65f;
+
     [Header("Carry Punch (full)")]
     [SerializeField] float carryPunchDuration = 0.35f;
     [SerializeField] float carryPunchStrength = 0.65f;
@@ -53,6 +70,10 @@ public class ExploreView : MonoBehaviour
     Tween _toastTween;
     Tween _scoreTween;
     Tween _timerPunchTween;
+    Tween _timerDamageColorTween;
+    Tween _timerDamageShakeTween;
+    Tween _timerBonusColorTween;
+    Tween _timerBonusPunchTween;
     Tween _carryPunchTween;
 
     int _displayedScore;
@@ -60,7 +81,10 @@ public class ExploreView : MonoBehaviour
     int _lastTimerDisplay = int.MinValue;
     Color _timerNormalColor = Color.white;
     Vector3 _timerBaseScale = Vector3.one;
+    Vector2 _timerBaseAnchoredPos;
     bool _timerVisualCached;
+    bool _timerDamageFlashActive;
+    bool _timerBonusFlashActive;
     Vector3 _carryBaseScale = Vector3.one;
     bool _carryVisualCached;
 
@@ -126,12 +150,130 @@ public class ExploreView : MonoBehaviour
         bool changed = display != _lastTimerDisplay;
 
         timerText.text = display.ToString();
-        timerText.color = display <= 5 ? TimerUrgent : _timerNormalColor;
+        if (!_timerDamageFlashActive && !_timerBonusFlashActive)
+            timerText.color = display <= 5 ? TimerUrgent : _timerNormalColor;
 
         if (changed && display > 0 && display <= 3)
             PunchTimer(display);
 
         _lastTimerDisplay = display;
+    }
+
+    /// <summary>Brief red flash + punch-shake when time damage is applied.</summary>
+    public void FlashTimerDamage()
+    {
+        if (timerText == null)
+            return;
+
+        CacheTimerVisuals();
+        ClearTimerBonusFlash();
+        _timerDamageFlashActive = true;
+        timerText.color = TimerUrgent;
+
+        if (_timerDamageColorTween != null && _timerDamageColorTween.IsActive())
+            _timerDamageColorTween.Kill();
+        if (_timerDamageShakeTween != null && _timerDamageShakeTween.IsActive())
+            _timerDamageShakeTween.Kill(true);
+
+        var rt = timerText.rectTransform;
+        rt.anchoredPosition = _timerBaseAnchoredPos;
+        timerText.transform.localScale = _timerBaseScale;
+
+        var seq = DOTween.Sequence().SetLink(gameObject).SetUpdate(true);
+        seq.Join(rt.DOPunchAnchorPos(timerDamagePunch, timerDamagePunchDuration, timerDamagePunchVibrato, timerDamagePunchElasticity));
+        seq.Join(timerText.transform.DOPunchScale(
+            Vector3.one * timerDamagePunchScale,
+            timerDamagePunchDuration,
+            timerDamagePunchVibrato,
+            timerDamagePunchElasticity));
+        seq.OnKill(() =>
+        {
+            if (rt != null)
+                rt.anchoredPosition = _timerBaseAnchoredPos;
+            if (timerText != null)
+                timerText.transform.localScale = _timerBaseScale;
+        });
+        _timerDamageShakeTween = seq;
+
+        float flashDur = Mathf.Max(0.05f, timerDamageFlashDuration);
+        _timerDamageColorTween = DOVirtual.DelayedCall(flashDur, EndTimerDamageFlash)
+            .SetLink(gameObject)
+            .SetUpdate(true);
+    }
+
+    void EndTimerDamageFlash()
+    {
+        _timerDamageFlashActive = false;
+        _timerDamageColorTween = null;
+        if (timerText == null || _timerBonusFlashActive)
+            return;
+        timerText.color = _lastTimerDisplay <= 5 ? TimerUrgent : _timerNormalColor;
+    }
+
+    /// <summary>Green flash + punch when bonus time is added (endless boss deposit).</summary>
+    public void FlashTimerBonus()
+    {
+        if (timerText == null)
+            return;
+
+        CacheTimerVisuals();
+        ClearTimerDamageFlash();
+        _timerBonusFlashActive = true;
+        timerText.color = TimerBonus;
+
+        if (_timerBonusColorTween != null && _timerBonusColorTween.IsActive())
+            _timerBonusColorTween.Kill();
+        if (_timerBonusPunchTween != null && _timerBonusPunchTween.IsActive())
+            _timerBonusPunchTween.Kill(true);
+        if (_timerPunchTween != null && _timerPunchTween.IsActive())
+            _timerPunchTween.Kill(true);
+
+        timerText.transform.localScale = _timerBaseScale;
+        _timerBonusPunchTween = timerText.transform
+            .DOPunchScale(Vector3.one * timerBonusPunchScale, timerBonusPunchDuration, timerBonusPunchVibrato, timerBonusPunchElasticity)
+            .SetLink(gameObject)
+            .SetUpdate(true)
+            .OnKill(() =>
+            {
+                if (timerText != null)
+                    timerText.transform.localScale = _timerBaseScale;
+            });
+
+        float flashDur = Mathf.Max(0.05f, timerBonusFlashDuration);
+        _timerBonusColorTween = DOVirtual.DelayedCall(flashDur, EndTimerBonusFlash)
+            .SetLink(gameObject)
+            .SetUpdate(true);
+    }
+
+    void EndTimerBonusFlash()
+    {
+        _timerBonusFlashActive = false;
+        _timerBonusColorTween = null;
+        if (timerText == null || _timerDamageFlashActive)
+            return;
+        timerText.color = _lastTimerDisplay <= 5 ? TimerUrgent : _timerNormalColor;
+    }
+
+    void ClearTimerDamageFlash()
+    {
+        _timerDamageFlashActive = false;
+        if (_timerDamageColorTween != null && _timerDamageColorTween.IsActive())
+            _timerDamageColorTween.Kill();
+        _timerDamageColorTween = null;
+        if (_timerDamageShakeTween != null && _timerDamageShakeTween.IsActive())
+            _timerDamageShakeTween.Kill(true);
+        _timerDamageShakeTween = null;
+    }
+
+    void ClearTimerBonusFlash()
+    {
+        _timerBonusFlashActive = false;
+        if (_timerBonusColorTween != null && _timerBonusColorTween.IsActive())
+            _timerBonusColorTween.Kill();
+        _timerBonusColorTween = null;
+        if (_timerBonusPunchTween != null && _timerBonusPunchTween.IsActive())
+            _timerBonusPunchTween.Kill(true);
+        _timerBonusPunchTween = null;
     }
 
     public void SetScore(int score, bool immediate = false)
@@ -299,6 +441,7 @@ public class ExploreView : MonoBehaviour
 
         _timerNormalColor = timerText.color;
         _timerBaseScale = timerText.transform.localScale;
+        _timerBaseAnchoredPos = timerText.rectTransform.anchoredPosition;
         _timerVisualCached = true;
     }
 
@@ -314,6 +457,8 @@ public class ExploreView : MonoBehaviour
     void ResetTimerVisual()
     {
         _lastTimerDisplay = int.MinValue;
+        ClearTimerDamageFlash();
+        ClearTimerBonusFlash();
         if (timerText == null)
             return;
 
@@ -323,10 +468,12 @@ public class ExploreView : MonoBehaviour
 
         timerText.color = _timerNormalColor;
         timerText.transform.localScale = _timerBaseScale;
+        timerText.rectTransform.anchoredPosition = _timerBaseAnchoredPos;
     }
 
     void OnEndGameClicked()
     {
+        RuntimeManager.PlayOneShot("event:/SFX/UX/sx_ui_select");
         onEndGame?.Invoke();
     }
 
@@ -362,6 +509,14 @@ public class ExploreView : MonoBehaviour
         KillScoreTween();
         if (_timerPunchTween != null && _timerPunchTween.IsActive())
             _timerPunchTween.Kill();
+        if (_timerDamageColorTween != null && _timerDamageColorTween.IsActive())
+            _timerDamageColorTween.Kill();
+        if (_timerDamageShakeTween != null && _timerDamageShakeTween.IsActive())
+            _timerDamageShakeTween.Kill();
+        if (_timerBonusColorTween != null && _timerBonusColorTween.IsActive())
+            _timerBonusColorTween.Kill();
+        if (_timerBonusPunchTween != null && _timerBonusPunchTween.IsActive())
+            _timerBonusPunchTween.Kill();
         if (_carryPunchTween != null && _carryPunchTween.IsActive())
             _carryPunchTween.Kill();
     }
