@@ -15,7 +15,7 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639206210929124453
+  lastModified: 639206153226186754
   FileSizes:
   - Name: Desktop
     Value: 2028
@@ -46,7 +46,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 963
 --- !u!114 &-4739003301656357679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,10 +89,10 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639206210929109286
+  lastModified: 639206153226174014
   FileSizes:
   - Name: Desktop
-    Value: 1214432
+    Value: 1270240
   Exists: 1
 --- !u!114 &-4612136185173350314
 MonoBehaviour:
@@ -201,7 +201,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 382
 --- !u!114 &-1772928997693742431
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -326,7 +326,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: -8696051253084561046}
   cacheVersion: 131860
-  cacheTime: 639206210929124453
+  cacheTime: 639206153226186754
   SerializableEventsDict:
   - key: event:/Music/mus_gameplay
     index: 0
@@ -478,7 +478,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 1138
 --- !u!114 &2669440942959015527
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -532,7 +532,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 75
+  Length: 738
 --- !u!114 &2961489215708530671
 MonoBehaviour:
   m_ObjectHideFlags: 0
