@@ -15,10 +15,10 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639206176160121813
+  lastModified: 639206185637060846
   FileSizes:
   - Name: Desktop
-    Value: 2204
+    Value: 2340
   Exists: 1
 --- !u!114 &-6564238588479961289
 MonoBehaviour:
@@ -170,10 +170,10 @@ MonoBehaviour:
   Path: laikaboltFMOD/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639206176160110857
+  lastModified: 639206185637049016
   FileSizes:
   - Name: Desktop
-    Value: 1349664
+    Value: 1366144
   Exists: 1
 --- !u!114 &-4612136185173350314
 MonoBehaviour:
@@ -432,13 +432,14 @@ MonoBehaviour:
   - {fileID: -3477166984251577654}
   - {fileID: -5028711972515683276}
   - {fileID: -5414541100324458669}
+  - {fileID: 5207250471900999656}
   EditorParameters: []
   MasterBanks:
   - {fileID: -4651756832321925464}
   StringsBanks:
   - {fileID: -8696051253084561046}
   cacheVersion: 131860
-  cacheTime: 639206176160121813
+  cacheTime: 639206185637060846
   SerializableEventsDict:
   - key: event:/Music/mus_gameplay
     index: 0
@@ -486,6 +487,12 @@ MonoBehaviour:
     index: 21
   - key: event:/SFX/NPC/sx_npc_ufo_capture
     index: 22
+  - key: event:/SFX/Environment/sx_env_ice_slip
+    index: 23
+  - key: event:/SFX/Environment/sx_env_ice_spawn
+    index: 24
+  - key: event:/SFX/UX/sx_ui_mainMenuStart
+    index: 25
 --- !u!114 &1314768490896853844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -721,6 +728,33 @@ MonoBehaviour:
     Data2: 1081600293
     Data3: 824175294
     Data4: 1480258636
+  Banks:
+  - {fileID: -4651756832321925464}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 1418
+--- !u!114 &5207250471900999656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/SFX/UX/sx_ui_mainMenuStart
+  m_EditorClassIdentifier: 
+  Path: event:/SFX/UX/sx_ui_mainMenuStart
+  Guid:
+    Data1: -1956070705
+    Data2: 1173410749
+    Data3: -1353797446
+    Data4: 1515701840
   Banks:
   - {fileID: -4651756832321925464}
   IsStream: 0
